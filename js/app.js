@@ -1,3 +1,4 @@
+// js/app.js - Controlador Principal de la Aplicación y Lógica de UI / Grabación
 document.addEventListener('DOMContentLoaded', () => {
     window.visualizer.init();
 
@@ -85,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.reload();
     });
 
-    // Lógica de Exportación Blindada por Hardware Nativo (Basada en master_ui_exportFULLBLIND.html)
+    // Lógica de Exportación Blindada por Hardware Nativo
     recordBtn.addEventListener('click', async () => {
         if (window.photoManager.photos.length === 0 || !audioEl.src) {
             statusBadge.textContent = '⚠️ Carga fotos y audio para exportar';
@@ -110,9 +111,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const formatChoice = document.getElementById('exportFormatSelector').value; // 'mp4' or 'webm'
 
         const canvasStream = canvas.captureStream(fps);
-        const audioStream = window.bpmAnalyzer.mediaDest ? window.bpmAnalyzer.mediaDest.stream : (audioEl.captureStream ? audioEl.captureStream() : audioEl.mozCaptureStream());
+        let audioStream;
+        try {
+            if (audioEl.captureStream) {
+                audioStream = audioEl.captureStream();
+            } else if (audioEl.mozCaptureStream) {
+                audioStream = audioEl.mozCaptureStream();
+            } else if (window.bpmAnalyzer && window.bpmAnalyzer.audioContext) {
+                const dest = window.bpmAnalyzer.audioContext.createMediaStreamDestination();
+                if (window.bpmAnalyzer.sourceNode) {
+                    window.bpmAnalyzer.sourceNode.connect(dest);
+                }
+                audioStream = dest.stream;
+            }
+        } catch (e) {
+            audioStream = new MediaStream();
+        }
         
-        const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioStream.getAudioTracks()]);
+        const audioTracks = audioStream ? audioStream.getAudioTracks() : [];
+        const combinedStream = new MediaStream([
+            ...canvasStream.getVideoTracks(),
+            ...(audioTracks.length > 0 ? audioTracks : [])
+        ]);
 
         let mimeTypes = [];
         if (formatChoice === 'mp4') {
@@ -203,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 100);
 
             overlay.style.display = 'none';
-            statusBadge.textContent = `✔ Archivo ${ext.toUpperCase()} guardado con éxito por hardware nativo[cite: 1]!`;
+            statusBadge.textContent = `✔ Archivo ${ext.toUpperCase()} guardado con éxito[cite: 1]!`;
         }, 1000);
     }
 
@@ -249,7 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Actualizar etiquetas deslizadores dinámicamente
     ['intensity', 'spikes', 'radius', 'glow'].forEach(id => {
         const el = document.getElementById(id);
         const valEl = document.getElementById(id + 'Val');
