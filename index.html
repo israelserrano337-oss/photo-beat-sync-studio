@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHOTO BEAT SYNC STUDIO</title>
+    <link rel="stylesheet" href="./styles.css">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BeatSync">
+    <link rel="manifest" href="./manifest.json">
+</head>
+<body>
+    <div class="app">
+        <div class="stage">
+            <div id="iphone-frame" style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
+                <div class="hd-badge" style="position:absolute; top:14px; left:14px; background:rgba(0,0,0,.75); border:1px solid rgba(0,251,255,.4); color:#00fbff; font-size:10px; font-weight:800; padding:4px 8px; border-radius:6px; z-index:3;">9:16 HD — 720×1280</div>
+                <div id="rec-indicator" style="position:absolute; top:14px; right:14px; color:#ff2a55; font-weight:bold; font-size:12px; display:none; align-items:center; gap:8px; background:rgba(10,10,14,.9); padding:6px 14px; border-radius:20px; border:1px solid rgba(255,42,85,.5); z-index:3;"><div class="dot" style="width:8px; height:8px; background:#ff2a55; border-radius:50%;"></div><span id="rec-time">REC 00:00</span></div>
+                <div id="overlay-screen" style="position:absolute; inset:0; background:rgba(8,8,12,.95); display:none; justify-content:center; align-items:center; z-index:20; flex-direction:column; text-align:center; padding:24px;">
+                    <div class="spinner" style="width:44px; height:44px; border:4px solid rgba(0,251,255,.15); border-radius:50%; border-top-color:#00fbff; animation:spin .8s linear infinite; margin-bottom:16px;"></div>
+                    <div id="overlay-text" style="font-size:12px; font-weight:700; color:#fff; line-height:1.6;">PROCESANDO VÍDEO...</div>
+                </div>
+                <canvas id="visualizer" width="720" height="1280"></canvas>
+            </div>
+        </div>
+
+        <aside class="panel">
+            <h1>PHOTO BEAT SYNC STUDIO</h1>
+            <div class="sub">9:16 • VJ HARD TECHNO & RAVE STUDIO</div>
+
+            <div class="group-box">
+                <label>1. Fotografías (Hasta 120)</label>
+                <div id="dropZone" class="drop-zone">
+                    <span>Arrastra fotos aquí o haz clic (JPG, PNG, WEBP)</span>
+                    <input id="photoFiles" type="file" multiple accept="image/jpeg,image/png,image/webp" style="display:none;">
+                </div>
+                <div class="photo-stats">Cargadas: <span id="photoCount">0</span> / 120</div>
+                <div id="thumbnailContainer" class="thumbnail-grid"></div>
+            </div>
+
+            <div class="group-box">
+                <label>2. Música y Sincronización</label>
+                <input id="audioFile" type="file" accept="audio/*">
+                
+                <div class="row-2">
+                    <div>
+                        <label>BPM Detectado</label>
+                        <input id="bpmInput" type="number" min="40" max="250" value="128" readonly>
+                    </div>
+                    <div>
+                        <label>Inicio Audio (s)</label>
+                        <input id="startTime" type="number" min="0" value="0">
+                    </div>
+                </div>
+
+                <div class="row-2">
+                    <div>
+                        <label>Duración Vídeo</label>
+                        <select id="durationSelect">
+                            <option value="15" selected>15 Segundos</option>
+                            <option value="30">30 Segundos</option>
+                            <option value="45">45 Segundos</option>
+                            <option value="60">60 Segundos</option>
+                            <option value="manual">Manual / Hasta fin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>FPS de Grabación</label>
+                        <select id="exportFpsSelector">
+                            <option value="60" selected>60 FPS (Fluido)</option>
+                            <option value="30">30 FPS (Ligero)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row-2" style="margin-top: 8px;">
+                    <div style="grid-column: span 2;">
+                        <label>Formato de Exportación (Hardware Nativo / Cero Dependencias)</label>
+                        <select id="exportFormatSelector">
+                            <option value="mp4" selected>MP4 — H.264 (Hardware Directo sin WASM)</option>
+                            <option value="webm">WebM — VP9 + Opus (Universal)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group-box">
+                <label>3. Efectos y Ecualizador Circular</label>
+                <div class="row-2">
+                    <div>
+                        <label>Efecto de Beat</label>
+                        <select id="effectSelect">
+                            <option value="Beat Pulse" selected>Beat Pulse (Zoom)</option>
+                            <option value="Flash">Flash de Luz</option>
+                            <option value="Shake">Shake (Temblor Rave)</option>
+                            <option value="NeonGlowPulse">Pulso Neón Cyan</option>
+                            <option value="Strobe">Estroboscópico Extremo</option>
+                            <option value="None">Ninguno</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Transición Fotos</label>
+                        <select id="transitionSelect">
+                            <option value="Crossfade" selected>Fundido Cruzado</option>
+                            <option value="Zoom">Zoom Dinámico</option>
+                            <option value="Slide">Desplazamiento Lateral</option>
+                            <option value="Cut">Corte Seco</option>
+                            <option value="BlurFade">Fundido con Desenfoque</option>
+                            <option value="FlashCut">Corte con Flash</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row-2" style="margin-top: 10px;">
+                    <div>
+                        <label>Paleta de Colores</label>
+                        <select id="colorPalette">
+                            <option value="neonAcid" selected>Neón Ácido (Cian / Rosa)</option>
+                            <option value="cyberGothic">Cyber-Gothic (Morado / Carmesí)</option>
+                            <option value="laserGreen">Láser Verde (Verde / Lima)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Presets Visuales</label>
+                        <select id="presetSelect">
+                            <option value="custom" selected>Personalizado</option>
+                            <option value="hardTechno">Hard Techno (Brutal)</option>
+                            <option value="cyberRave">Rave Cyber-Gothic</option>
+                            <option value="acidLaser">Láser Ácido 200BPM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label"><span>Intensidad EQ</span><span id="intensityVal">1.45</span></div>
+                    <input id="intensity" type="range" min="0.5" max="3.0" step="0.05" value="1.45">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label"><span>Puntas / Picos</span><span id="spikesVal">112</span></div>
+                    <input id="spikes" type="range" min="32" max="256" step="8" value="112">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label"><span>Radio del Círculo</span><span id="radiusVal">190</span></div>
+                    <input id="radius" type="range" min="80" max="350" step="5" value="190">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-label"><span>Brillo / Glow</span><span id="glowVal">25</span></div>
+                    <input id="glow" type="range" min="0" max="50" step="1" value="25">
+                </div>
+            </div>
+
+            <div class="row-2 margin-top-10">
+                <button id="previewBtn" class="btn-primary">▶ PREVISUALIZAR</button>
+                <button id="pauseBtn" class="btn-primary" style="background: #eab308; border-color: #ca8a04;">⏸ PAUSAR</button>
+            </div>
+            
+            <div class="row-2 margin-top-10">
+                <button id="recordBtn" class="btn-record">● GRABAR / EXPORTAR</button>
+                <button id="reloadBtn" class="btn-record" style="background: #dc2626; border-color: #b91c1c;">🔄 REINICIAR</button>
+            </div>
+
+            <div class="status">
+                <span id="status" class="badge">Listo • Configura tus parámetros (Exportación Blindada por Hardware sin FFmpeg)</span>
+            </div>
+
+            <audio id="audio" style="display:none;" playsinline crossorigin="anonymous"></audio>
+        </aside>
+    </div>
+
+    <script src="./js/bpmAnalyzer.js"></script>
+    <script src="./js/photoManager.js"></script>
+    <script src="./js/effectsAndTransitions.js"></script>
+    <script src="./js/visualizer.js"></script>
+    <script src="./js/app.js"></script>
+</body>
+</html>
