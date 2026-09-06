@@ -1,4 +1,4 @@
-// js/app.js - Controlador Principal con Sincronización Exacta por Tiempo de Audio (currentTime)
+// js/app.js - Hard Techno Audio-Visualizer Master Controller with Audio-Driven Sync
 document.addEventListener('DOMContentLoaded', () => {
     window.visualizer.init();
 
@@ -225,10 +225,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function loopAnimation() {
         if (!isPlaying && !isRecording) return;
         
-        // Sincronización milimétrica usando audioEl.currentTime en lugar de rendimiento genérico
+        // Surgical audio-clock precision for beat synchronization
         const currentTime = audioEl.currentTime || 0;
         const secondsPerBeat = 60 / currentBpm;
-        const beatDuration = secondsPerBeat * 2; // Cada 2 beats cambia de foto de forma exacta
+        const beatDuration = secondsPerBeat * 2; // Changes photo every 2 beats for hard techno pacing
         const totalPhotos = window.photoManager.photos.length || 1;
         
         const photoProgress = (currentTime / beatDuration) % totalPhotos;
