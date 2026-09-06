@@ -1,4 +1,4 @@
-// js/visualizer.js - Renderizado Gráfico 9:16 y Análisis de Bajos para Sincronización Extrema
+// js/visualizer.js - Renderizado Gráfico 9:16 y Ecualizador Circular Sincronizado con Bajos
 class Visualizer {
     constructor() {
         this.canvas = null;
@@ -55,14 +55,13 @@ class Visualizer {
         let bassIntensity = 0;
         let dataArray = null;
 
-        // Análisis de Audio optimizado para aislar los bajos (Kicks de Hard Techno)
         if (analyser) {
             const bufferLength = analyser.frequencyBinCount;
             dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
 
-            // Tomamos las primeras posiciones del array (bajos / frecuencias graves donde golpea el bombo)
-            const bassRangeCount = Math.floor(bufferLength * 0.2); 
+            // Aislamiento preciso de frecuencias bajas (kick de techno)
+            const bassRangeCount = Math.floor(bufferLength * 0.25);
             let bassSum = 0;
             for (let i = 0; i < bassRangeCount; i++) {
                 bassSum += dataArray[i];
@@ -70,10 +69,10 @@ class Visualizer {
             bassIntensity = (bassSum / bassRangeCount) / 255.0;
         }
 
-        // Renderizado de Fotografías base con Transición
+        // Renderizado de Fotografías base con Transición fluida según el ritmo
         if (photos.length > 0) {
             const total = photos.length;
-            const scaledProgress = progress * total;
+            const scaledProgress = progress;
             const currentIndex = Math.floor(scaledProgress) % total;
             const nextIndex = (currentIndex + 1) % total;
             const transitionProgress = scaledProgress - Math.floor(scaledProgress);
@@ -89,7 +88,7 @@ class Visualizer {
             }
         }
 
-        // Aplicar efectos visuales gobernados por la intensidad de los bajos
+        // Aplicar efectos visuales gobernados por la intensidad del bajo
         if (window.effectsAndTransitions) {
             window.effectsAndTransitions.applyBeatEffect(this.ctx, w, h, settings.effect, bassIntensity);
         }
@@ -118,7 +117,7 @@ class Visualizer {
         for (let i = 0; i < spikes; i++) {
             const angle = (i * 2 * Math.PI) / spikes;
             const val = dataArray[i % dataArray.length] / 255.0;
-            const r = radius + (val * 90 * (settings.intensity || 1.45));
+            const r = radius + (val * 90 * (settings.intensity || 1.45) * (1 + bassIntensity * 0.3));
             const x = Math.cos(angle) * r;
             const y = Math.sin(angle) * r;
             if (i === 0) this.ctx.moveTo(x, y);

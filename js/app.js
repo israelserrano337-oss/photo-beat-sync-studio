@@ -1,4 +1,4 @@
-// js/app.js - Controlador Principal de la Aplicación y Lógica de UI / Grabación
+// js/app.js - Controlador Principal de la Aplicación y Sincronización de Animación
 document.addEventListener('DOMContentLoaded', () => {
     window.visualizer.init();
 
@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedMimeType = '';
     let recordStartTime = 0;
     let targetDuration = 30;
+    let currentBpm = 128;
 
     dropZone.addEventListener('click', () => photoInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#6366f1'; });
@@ -44,8 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
             audioEl.src = url;
             analyser = window.bpmAnalyzer.setupAudioElement(audioEl);
             const analysis = await window.bpmAnalyzer.analyze(file);
-            document.getElementById('bpmInput').value = analysis.bpm;
-            statusBadge.textContent = `Música lista • BPM: ${analysis.bpm}`;
+            currentBpm = analysis.bpm || 128;
+            document.getElementById('bpmInput').value = currentBpm;
+            statusBadge.textContent = `Música lista • BPM: ${currentBpm}`;
         }
     });
 
@@ -86,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.reload();
     });
 
-    // Lógica de Exportación Blindada por Hardware Nativo
     recordBtn.addEventListener('click', async () => {
         if (window.photoManager.photos.length === 0 || !audioEl.src) {
             statusBadge.textContent = '⚠️ Carga fotos y audio para exportar';
@@ -108,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const fps = parseInt(document.getElementById('exportFpsSelector').value) || 60;
         const durStr = document.getElementById('durationSelect').value;
         targetDuration = durStr === 'manual' ? 'manual' : parseInt(durStr);
-        const formatChoice = document.getElementById('exportFormatSelector').value; // 'mp4' or 'webm'
 
         const canvasStream = canvas.captureStream(fps);
         let audioStream;
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 audioStream = audioEl.captureStream();
             } else if (audioEl.mozCaptureStream) {
                 audioStream = audioEl.mozCaptureStream();
-            } else if (window.bpmAnalyzer && window.bpmAnalyzer.audioContext) {
+            } else {
                 const dest = window.bpmAnalyzer.audioContext.createMediaStreamDestination();
                 if (window.bpmAnalyzer.sourceNode) {
                     window.bpmAnalyzer.sourceNode.connect(dest);
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 100);
 
             overlay.style.display = 'none';
-            statusBadge.textContent = `✔ Archivo ${ext.toUpperCase()} guardado con éxito[cite: 1]!`;
+            statusBadge.textContent = `✔ Archivo ${ext.toUpperCase()} guardado con éxito!`;
         }, 1000);
     }
 
@@ -230,7 +230,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const durationSec = targetDuration === 'manual' ? 999999 : (parseInt(document.getElementById('durationSelect').value) || 30);
         const elapsed = (performance.now() - startTimeAnimation) / 1000;
-        const progress = (elapsed % durationSec) / durationSec;
+        
+        // Sincronización de cambio de fotos basada en el BPM (cada 2 beats se cambia de foto con transición fluida)
+        const secondsPerBeat = 60 / currentBpm;
+        const beatDuration = secondsPerBeat * 2; 
+        const totalPhotos = window.photoManager.photos.length || 1;
+        
+        const photoProgress = (elapsed / beatDuration) % totalPhotos;
 
         const settings = {
             intensity: parseFloat(document.getElementById('intensity').value),
@@ -241,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
             transition: document.getElementById('transitionSelect').value
         };
 
-        window.visualizer.renderFrame(analyser, window.photoManager.photos, progress, settings);
+        window.visualizer.renderFrame(analyser, window.photoManager.photos, photoProgress, settings);
 
         if (isRecording && targetDuration !== 'manual') {
             const recElapsed = (Date.now() - recordStartTime) / 1000;
