@@ -1,4 +1,4 @@
-// js/app.js - Controlador Principal de la Aplicación y Sincronización de Animación
+// js/app.js - Controlador Principal con Sincronización Exacta por Tiempo de Audio (currentTime)
 document.addEventListener('DOMContentLoaded', () => {
     window.visualizer.init();
 
@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let analyser = null;
     let isPlaying = false;
     let isRecording = false;
-    let startTimeAnimation = 0;
     let mediaRecorder = null;
     let recordedChunks = [];
     let selectedMimeType = '';
@@ -69,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await audioEl.play();
             isPlaying = true;
             isRecording = false;
-            startTimeAnimation = performance.now();
             requestAnimationFrame(loopAnimation);
             statusBadge.textContent = '▶ Reproduciendo previsualización...';
         } catch (err) {
@@ -170,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
             isPlaying = true;
             isRecording = true;
             recordStartTime = Date.now();
-            startTimeAnimation = performance.now();
 
             recordBtn.textContent = '⏹ DETENER GRABACIÓN';
             recordBtn.style.background = '#000';
@@ -228,15 +225,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function loopAnimation() {
         if (!isPlaying && !isRecording) return;
         
-        const durationSec = targetDuration === 'manual' ? 999999 : (parseInt(document.getElementById('durationSelect').value) || 30);
-        const elapsed = (performance.now() - startTimeAnimation) / 1000;
-        
-        // Sincronización de cambio de fotos basada en el BPM (cada 2 beats se cambia de foto con transición fluida)
+        // Sincronización milimétrica usando audioEl.currentTime en lugar de rendimiento genérico
+        const currentTime = audioEl.currentTime || 0;
         const secondsPerBeat = 60 / currentBpm;
-        const beatDuration = secondsPerBeat * 2; 
+        const beatDuration = secondsPerBeat * 2; // Cada 2 beats cambia de foto de forma exacta
         const totalPhotos = window.photoManager.photos.length || 1;
         
-        const photoProgress = (elapsed / beatDuration) % totalPhotos;
+        const photoProgress = (currentTime / beatDuration) % totalPhotos;
 
         const settings = {
             intensity: parseFloat(document.getElementById('intensity').value),
@@ -255,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const secs = String(Math.floor(recElapsed % 60)).padStart(2, '0');
             document.getElementById('rec-time').textContent = `REC ${mins}:${secs}`;
             
-            if (recElapsed >= targetDuration) {
+            if (recElapsed >= targetDuration || audioEl.ended) {
                 stopRecording();
                 return;
             }
