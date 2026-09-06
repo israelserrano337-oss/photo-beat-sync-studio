@@ -10,8 +10,9 @@ class EffectsAndTransitions {
         ctx.save();
         
         const clampedProgress = Math.max(0, Math.min(1, progress));
+        const activeType = type || 'Crossfade';
 
-        switch(type) {
+        switch(activeType) {
             case 'Crossfade':
                 vizInstance.drawImageCover(ctx, img1, w, h, 1);
                 ctx.globalAlpha = clampedProgress;
@@ -70,6 +71,7 @@ class EffectsAndTransitions {
                 vizInstance.drawImageCover(ctx, img1, w, h, 1);
                 ctx.globalAlpha = clampedProgress;
                 vizInstance.drawImageCover(ctx, img2, w, h, 1);
+                break;
         }
         
         ctx.restore();
