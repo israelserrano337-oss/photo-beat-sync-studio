@@ -1,4 +1,4 @@
-// js/visualizer.js - Renderizado Gráfico 9:16 y Ecualizador Circular en Canvas
+// js/visualizer.js - Renderizado Gráfico 9:16 y Análisis de Bajos para Sincronización Extrema
 class Visualizer {
     constructor() {
         this.canvas = null;
@@ -25,7 +25,6 @@ class Visualizer {
         return palettes[val] || palettes.neonAcid;
     }
 
-    // Método auxiliar para dibujar la imagen centrada y escalada (cover) sin deformarla ni desbordarla
     drawImageCover(ctx, img, w, h, scaleMultiplier = 1) {
         if (!img) return;
         const imgRatio = img.width / img.height;
@@ -53,7 +52,25 @@ class Visualizer {
         this.ctx.fillStyle = '#050509';
         this.ctx.fillRect(0, 0, w, h);
 
-        // Renderizado seguro de Fotografías base con Transición
+        let bassIntensity = 0;
+        let dataArray = null;
+
+        // Análisis de Audio optimizado para aislar los bajos (Kicks de Hard Techno)
+        if (analyser) {
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+
+            // Tomamos las primeras posiciones del array (bajos / frecuencias graves donde golpea el bombo)
+            const bassRangeCount = Math.floor(bufferLength * 0.2); 
+            let bassSum = 0;
+            for (let i = 0; i < bassRangeCount; i++) {
+                bassSum += dataArray[i];
+            }
+            bassIntensity = (bassSum / bassRangeCount) / 255.0;
+        }
+
+        // Renderizado de Fotografías base con Transición
         if (photos.length > 0) {
             const total = photos.length;
             const scaledProgress = progress * total;
@@ -72,25 +89,18 @@ class Visualizer {
             }
         }
 
-        // Análisis de Audio para Ecualizador Circular
-        if (analyser) {
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
+        // Aplicar efectos visuales gobernados por la intensidad de los bajos
+        if (window.effectsAndTransitions) {
+            window.effectsAndTransitions.applyBeatEffect(this.ctx, w, h, settings.effect, bassIntensity);
+        }
 
-            let sum = 0;
-            for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
-            const avg = (sum / bufferLength) / 255.0;
-
-            if (window.effectsAndTransitions) {
-                window.effectsAndTransitions.applyBeatEffect(this.ctx, w, h, settings.effect, avg);
-            }
-
-            this.drawCircularEQ(w, h, dataArray, settings, avg);
+        // Dibujar el ecualizador circular con los datos reales
+        if (dataArray) {
+            this.drawCircularEQ(w, h, dataArray, settings, bassIntensity);
         }
     }
 
-    drawCircularEQ(w, h, dataArray, settings, intensity) {
+    drawCircularEQ(w, h, dataArray, settings, bassIntensity) {
         const cx = w / 2;
         const cy = h / 2;
         const radius = settings.radius || 190;
@@ -119,4 +129,5 @@ class Visualizer {
         this.ctx.restore();
     }
 }
+
 window.visualizer = new Visualizer();

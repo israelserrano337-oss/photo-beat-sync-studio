@@ -1,4 +1,4 @@
-// js/effectsAndTransitions.js - Transiciones y Efectos Corregidos y Estables
+// js/effectsAndTransitions.js - Transiciones y Efectos Sincronizados al Ritmo Hard Techno
 class EffectsAndTransitions {
     
     applyTransition(ctx, img1, img2, progress, type, w, h, vizInstance) {
@@ -6,9 +6,7 @@ class EffectsAndTransitions {
         
         switch(type) {
             case 'Crossfade':
-                // Dibuja imagen base completa
                 vizInstance.drawImageCover(ctx, img1, w, h, 1);
-                // Dibuja imagen entrante con opacidad progresiva encima
                 ctx.globalAlpha = Math.max(0, Math.min(1, progress));
                 vizInstance.drawImageCover(ctx, img2, w, h, 1);
                 break;
@@ -18,7 +16,7 @@ class EffectsAndTransitions {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, Math.min(1, progress));
                 ctx.translate(w / 2, h / 2);
-                const scale = 1 + (progress * 0.15);
+                const scale = 1 + (progress * 0.2);
                 ctx.scale(scale, scale);
                 ctx.translate(-w / 2, -h / 2);
                 vizInstance.drawImageCover(ctx, img2, w, h, 1);
@@ -47,7 +45,7 @@ class EffectsAndTransitions {
                 
             case 'BlurFade':
                 vizInstance.drawImageCover(ctx, img1, w, h, 1);
-                ctx.globalAlpha = Math.max(0, Math.min(1, progress * 0.8));
+                ctx.globalAlpha = Math.max(0, Math.min(1, progress * 0.9));
                 vizInstance.drawImageCover(ctx, img2, w, h, 1);
                 break;
                 
@@ -70,15 +68,16 @@ class EffectsAndTransitions {
         ctx.restore();
     }
 
-    applyBeatEffect(ctx, w, h, effectType, audioIntensity) {
+    applyBeatEffect(ctx, w, h, effectType, bassIntensity) {
         if (!effectType || effectType === 'None') return;
 
         ctx.save();
         
+        // bassIntensity viene normalizado de 0 a 1 enfocado en los graves (kicks)
         switch(effectType) {
             case 'Beat Pulse':
-                if (audioIntensity > 0.05) {
-                    const scale = 1 + (audioIntensity * 0.08);
+                if (bassIntensity > 0.15) {
+                    const scale = 1 + (bassIntensity * 0.12);
                     ctx.translate(w / 2, h / 2);
                     ctx.scale(scale, scale);
                     ctx.translate(-w / 2, -h / 2);
@@ -86,15 +85,15 @@ class EffectsAndTransitions {
                 break;
                 
             case 'Flash':
-                if (audioIntensity > 0.4) {
-                    ctx.fillStyle = `rgba(255, 255, 255, ${(audioIntensity - 0.4) * 0.5})`;
+                if (bassIntensity > 0.35) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${bassIntensity * 0.55})`;
                     ctx.fillRect(0, 0, w, h);
                 }
                 break;
                 
             case 'Shake':
-                if (audioIntensity > 0.45) {
-                    const intensityFactor = (audioIntensity - 0.45) * 20;
+                if (bassIntensity > 0.4) {
+                    const intensityFactor = bassIntensity * 25;
                     const offsetX = (Math.random() - 0.5) * intensityFactor;
                     const offsetY = (Math.random() - 0.5) * intensityFactor;
                     ctx.translate(offsetX, offsetY);
@@ -102,15 +101,15 @@ class EffectsAndTransitions {
                 break;
                 
             case 'NeonGlowPulse':
-                if (audioIntensity > 0.3) {
-                    ctx.fillStyle = `rgba(0, 251, 255, ${(audioIntensity - 0.3) * 0.35})`;
+                if (bassIntensity > 0.25) {
+                    ctx.fillStyle = `rgba(0, 251, 255, ${bassIntensity * 0.4})`;
                     ctx.fillRect(0, 0, w, h);
                 }
                 break;
                 
             case 'Strobe':
-                if (audioIntensity > 0.6) {
-                    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 0, 170, 0.4)';
+                if (bassIntensity > 0.5) {
+                    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 0, 170, 0.5)';
                     ctx.fillRect(0, 0, w, h);
                 }
                 break;
