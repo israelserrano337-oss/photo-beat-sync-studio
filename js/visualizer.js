@@ -1,4 +1,4 @@
-// js/visualizer.js - Renderizado Gráfico 9:16 con Ecualizador Circular Estilo Festival y Partículas/Brillos de Neón
+// js/visualizer.js - Renderizado Gráfico 9:16 con Ecualizador Circular Estilo Láser Neón de Alta Gama
 class Visualizer {
     constructor() {
         this.canvas = null;
@@ -17,9 +17,9 @@ class Visualizer {
         const val = paletteSelect ? paletteSelect.value : 'neonAcid';
         
         const palettes = {
-            neonAcid: { primary: '#00fbff', secondary: '#ff00aa', shadow: '#ff00aa' },
-            cyberGothic: { primary: '#9d00ff', secondary: '#ff0055', shadow: '#ff0055' },
-            laserGreen: { primary: '#00ff66', secondary: '#ccff00', shadow: '#ccff00' }
+            neonAcid: { primary: '#00fbff', secondary: '#ff00aa', glow: '#00fbff' },
+            cyberGothic: { primary: '#9d00ff', secondary: '#ff0055', glow: '#ff0055' },
+            laserGreen: { primary: '#00ff66', secondary: '#ccff00', glow: '#00ff66' }
         };
         
         return palettes[val] || palettes.neonAcid;
@@ -60,7 +60,7 @@ class Visualizer {
             dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
 
-            const bassRangeCount = Math.floor(bufferLength * 0.25);
+            const bassRangeCount = Math.floor(bufferLength * 0.3);
             let bassSum = 0;
             for (let i = 0; i < bassRangeCount; i++) {
                 bassSum += dataArray[i];
@@ -68,7 +68,7 @@ class Visualizer {
             bassIntensity = (bassSum / bassRangeCount) / 255.0;
         }
 
-        // Renderizado de Fotografías base con Transición fluida sincronizada
+        // Renderizado de Fotografías con Transición Segura y Limpia
         if (photos.length > 0) {
             const total = photos.length;
             const scaledProgress = progress;
@@ -99,42 +99,48 @@ class Visualizer {
     drawCircularEQ(w, h, dataArray, settings, bassIntensity) {
         const cx = w / 2;
         const cy = h / 2;
-        const radius = (settings.radius || 190) * (1 + bassIntensity * 0.15); // El radio pulsa con el bajo
-        const spikes = settings.spikes || 96;
+        const baseRadius = settings.radius || 180;
+        const radius = baseRadius * (1 + bassIntensity * 0.2); // Pulso dinámico con los bajos
+        const spikes = settings.spikes || 128;
         const colors = this.getCurrentPaletteColors();
 
         this.ctx.save();
         this.ctx.translate(cx, cy);
 
-        // Capa de Relleno Translúcido Neon Interior
+        // Halo de luz central de fondo con alta intensidad en los graves
+        const gradient = this.ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius * 1.4);
+        gradient.addColorStop(0, colors.primary + '30');
+        gradient.addColorStop(1, 'transparent');
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, radius * 1.4, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Anillo Neón Principal (Ecualizador Circular Simétrico)
         this.ctx.beginPath();
         for (let i = 0; i < spikes; i++) {
             const angle = (i * 2 * Math.PI) / spikes;
             const val = dataArray[i % dataArray.length] / 255.0;
-            const r = radius + (val * 80 * (settings.intensity || 1.45));
+            const r = radius + (val * 110 * (settings.intensity || 1.3));
             const x = Math.cos(angle) * r;
             const y = Math.sin(angle) * r;
             if (i === 0) this.ctx.moveTo(x, y);
             else this.ctx.lineTo(x, y);
         }
         this.ctx.closePath();
-        
-        this.ctx.fillStyle = colors.primary + '15'; // Relleno muy suave transparente
-        this.ctx.fill();
 
-        // Línea de Contorno Principal con Brillo Intenso
         this.ctx.strokeStyle = colors.primary;
-        this.ctx.lineWidth = 3.5;
-        this.ctx.shadowBlur = (settings.glow || 30) + (bassIntensity * 20);
-        this.ctx.shadowColor = colors.shadow;
+        this.ctx.lineWidth = 3;
+        this.ctx.shadowBlur = (settings.glow || 25) + (bassIntensity * 30);
+        this.ctx.shadowColor = colors.glow;
         this.ctx.stroke();
 
-        // Anillo interior secundario con ondas en contrafase para dar profundidad 3D
+        // Anillo Secundario en Contrafase para Efecto Láser Pro
         this.ctx.beginPath();
         for (let i = 0; i < spikes; i++) {
             const angle = (i * 2 * Math.PI) / spikes;
-            const val = dataArray[(i + 15) % dataArray.length] / 255.0;
-            const r = (radius * 0.85) + (val * 40 * (settings.intensity || 1.45));
+            const val = dataArray[(i + 32) % dataArray.length] / 255.0;
+            const r = (radius * 0.9) + (val * 50 * (settings.intensity || 1.3));
             const x = Math.cos(angle) * r;
             const y = Math.sin(angle) * r;
             if (i === 0) this.ctx.moveTo(x, y);
@@ -143,7 +149,7 @@ class Visualizer {
         this.ctx.closePath();
         this.ctx.strokeStyle = colors.secondary;
         this.ctx.lineWidth = 1.5;
-        this.ctx.globalAlpha = 0.7;
+        this.ctx.globalAlpha = 0.8;
         this.ctx.stroke();
 
         this.ctx.restore();
