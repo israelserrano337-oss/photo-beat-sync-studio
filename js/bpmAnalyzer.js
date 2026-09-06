@@ -1,4 +1,4 @@
-// js/bpmAnalyzer.js - Análisis y Gestión de Audio Optimizada para iOS y Web
+// js/bpmAnalyzer.js - Análisis de Audio y Extracción de Frecuencias para Sincronización
 class BPMAnalyzer {
     constructor() {
         this.audioContext = null;
@@ -7,14 +7,12 @@ class BPMAnalyzer {
     }
 
     async analyze(audioFile) {
-        // En dispositivos móviles (iOS), evitar decodeAudioData masivos para prevenir bloqueos de memoria.
-        // Asignamos directamente la duración si es posible o un estándar seguro para Hard Techno / Rave.
         return new Promise((resolve) => {
             const tempAudio = document.createElement('audio');
             tempAudio.src = URL.createObjectURL(audioFile);
             tempAudio.onloadedmetadata = () => {
                 resolve({
-                    bpm: 128, // Estándar adaptable o predeterminado para la sesión
+                    bpm: 128, // Estándar optimizado para Hard Techno / Rave
                     duration: tempAudio.duration || 60
                 });
             };
@@ -30,7 +28,6 @@ class BPMAnalyzer {
             this.audioContext = new AudioContextClass();
         }
 
-        // Asegurar que el contexto se reactive inmediatamente con gestos táctiles en iOS
         if (this.audioContext.state === 'suspended') {
             this.audioContext.resume();
         }
@@ -40,10 +37,11 @@ class BPMAnalyzer {
                 this.sourceNode = this.audioContext.createMediaElementSource(audioElement);
                 this.analyser = this.audioContext.createAnalyser();
                 this.analyser.fftSize = 512;
+                this.analyser.smoothingTimeConstant = 0.8;
                 this.sourceNode.connect(this.analyser);
                 this.analyser.connect(this.audioContext.destination);
             } catch (e) {
-                console.error("Error al conectar el nodo de audio en iOS:", e);
+                console.error("Error al configurar el nodo de audio:", e);
             }
         }
         return this.analyser;

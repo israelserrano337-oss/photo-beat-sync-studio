@@ -134,15 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
             ...(audioTracks.length > 0 ? audioTracks : [])
         ]);
 
-        let mimeTypes = [];
-        if (formatChoice === 'mp4') {
-            mimeTypes = [
-                'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
-                'video/mp4;codecs=h264,aac',
-                'video/mp4'
-            ];
-        }
-        mimeTypes.push('video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm');
+        let mimeTypes = [
+            'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+            'video/mp4;codecs=h264,aac',
+            'video/mp4',
+            'video/webm;codecs=vp9,opus',
+            'video/webm'
+        ];
 
         for (let mt of mimeTypes) {
             if (MediaRecorder.isTypeSupported(mt)) {
