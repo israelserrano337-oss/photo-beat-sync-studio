@@ -1,4 +1,4 @@
-// js/app.js - Hard Techno Audio-Visualizer Master Controller with Audio-Driven Sync
+// js/app.js - Master Controller with Clean Audio Destination Routing for TikTok/CapCut Compatibility
 document.addEventListener('DOMContentLoaded', () => {
     window.visualizer.init();
 
@@ -109,18 +109,22 @@ document.addEventListener('DOMContentLoaded', () => {
         targetDuration = durStr === 'manual' ? 'manual' : parseInt(durStr);
 
         const canvasStream = canvas.captureStream(fps);
+        
+        // Robust Audio Stream Capture preventing TikTok/CapCut audio stuttering
         let audioStream;
         try {
-            if (audioEl.captureStream) {
-                audioStream = audioEl.captureStream();
-            } else if (audioEl.mozCaptureStream) {
-                audioStream = audioEl.mozCaptureStream();
-            } else {
+            if (window.bpmAnalyzer && window.bpmAnalyzer.audioContext) {
                 const dest = window.bpmAnalyzer.audioContext.createMediaStreamDestination();
                 if (window.bpmAnalyzer.sourceNode) {
                     window.bpmAnalyzer.sourceNode.connect(dest);
+                    // Also maintain connection to destination for normal playback
+                    window.bpmAnalyzer.sourceNode.connect(window.bpmAnalyzer.audioContext.destination);
                 }
                 audioStream = dest.stream;
+            } else if (audioEl.captureStream) {
+                audioStream = audioEl.captureStream();
+            } else if (audioEl.mozCaptureStream) {
+                audioStream = audioEl.mozCaptureStream();
             }
         } catch (e) {
             audioStream = new MediaStream();
@@ -225,10 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function loopAnimation() {
         if (!isPlaying && !isRecording) return;
         
-        // Surgical audio-clock precision for beat synchronization
         const currentTime = audioEl.currentTime || 0;
         const secondsPerBeat = 60 / currentBpm;
-        const beatDuration = secondsPerBeat * 2; // Changes photo every 2 beats for hard techno pacing
+        const beatDuration = secondsPerBeat * 2; 
         const totalPhotos = window.photoManager.photos.length || 1;
         
         const photoProgress = (currentTime / beatDuration) % totalPhotos;

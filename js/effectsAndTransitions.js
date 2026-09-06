@@ -1,11 +1,10 @@
-// js/effectsAndTransitions.js - After Effects Grade Motion Design Engine for HTML5 Canvas
+// js/effectsAndTransitions.js - Production Grade Motion Design Engine with Multi-Transition Support
 class EffectsAndTransitions {
     constructor() {
-        // Cache for procedural glitch/aberration lines
-        this.glitchOffsets = [];
+        this.transitionCache = {};
     }
 
-    // Apply high-end professional transitions between photo frames
+    // Apply high-end professional transitions between photo frames based on user selection
     applyTransition(ctx, img1, img2, progress, type, w, h, vizInstance) {
         ctx.save();
         
@@ -20,8 +19,7 @@ class EffectsAndTransitions {
                 break;
                 
             case 'Zoom':
-                // Smooth cinematic zoom and opacity crossfade
-                vizInstance.drawImageCover(ctx, img1, w, h, 1 + (clampedProgress * 0.15));
+                vizInstance.drawImageCover(ctx, img1, w, h, 1 + (clampedProgress * 0.12));
                 ctx.globalAlpha = clampedProgress;
                 ctx.save();
                 ctx.translate(w / 2, h / 2);
@@ -41,28 +39,26 @@ class EffectsAndTransitions {
                 break;
                 
             case 'FlashCut':
-                // After Effects style white adjustment layer flash punch on transition trigger
-                if (clampedProgress < 0.85) {
+                if (clampedProgress < 0.82) {
                     vizInstance.drawImageCover(ctx, img1, w, h, 1);
                 } else {
                     vizInstance.drawImageCover(ctx, img2, w, h, 1);
-                    const flashAlpha = Math.sin((clampedProgress - 0.85) / 0.15 * Math.PI);
-                    ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha * 0.85})`;
+                    const flashAlpha = Math.sin((clampedProgress - 0.82) / 0.18 * Math.PI);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha * 0.9})`;
                     ctx.fillRect(0, 0, w, h);
                 }
                 break;
 
             case 'ChromaticGlitch':
-                // Cyberpunk RGB Split & Glitch pass (After Effects Glitch Preset look)
                 if (clampedProgress < 0.5) {
                     vizInstance.drawImageCover(ctx, img1, w, h, 1);
                 } else {
                     vizInstance.drawImageCover(ctx, img2, w, h, 1);
-                    if (clampedProgress > 0.8) {
-                        ctx.fillStyle = 'rgba(0, 251, 255, 0.2)';
-                        ctx.fillRect(-15, 0, w, h);
-                        ctx.fillStyle = 'rgba(255, 0, 170, 0.2)';
-                        ctx.fillRect(15, 0, w, h);
+                    if (clampedProgress > 0.78) {
+                        ctx.fillStyle = 'rgba(0, 251, 255, 0.25)';
+                        ctx.fillRect(-18, 0, w, h);
+                        ctx.fillStyle = 'rgba(255, 0, 170, 0.25)';
+                        ctx.fillRect(18, 0, w, h);
                     }
                 }
                 break;
@@ -77,7 +73,7 @@ class EffectsAndTransitions {
         ctx.restore();
     }
 
-    // Apply intense audio-reactive VFX layers (After Effects Expressions equivalent)
+    // Apply intense audio-reactive VFX layers
     applyBeatEffect(ctx, w, h, effectType, bassIntensity) {
         if (!effectType || effectType === 'None') return;
 
@@ -112,7 +108,7 @@ class EffectsAndTransitions {
             case 'NeonGlowPulse':
                 if (bassIntensity > 0.18) {
                     const gradient = ctx.createRadialGradient(w/2, h/2, w*0.1, w/2, h/2, w*0.8);
-                    gradient.addColorStop(0, `rgba(0, 251, 255, ${bassIntensity * 0.3})`);
+                    gradient.addColorStop(0, `rgba(0, 251, 255, ${bassIntensity * 0.35})`);
                     gradient.addColorStop(1, 'transparent');
                     ctx.fillStyle = gradient;
                     ctx.fillRect(0, 0, w, h);
