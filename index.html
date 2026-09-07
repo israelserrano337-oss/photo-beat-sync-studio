@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PHOTO BEAT SYNC STUDIO</title>
+    <title>PHOTO BEAT SYNC STUDIO 3D</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BeatSync">
+    <meta name="apple-mobile-web-app-title" content="BeatSync3D">
     <style>
         * {
             box-sizing: border-box;
@@ -59,6 +59,14 @@
             min-height: 50vh;
         }
 
+        .stage.clean-mode {
+            padding: 0;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+        }
+
         #iphone-frame {
             position: relative;
             width: 100%;
@@ -72,8 +80,17 @@
             background: #000;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 0 30px rgba(0, 251, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 35px rgba(0, 251, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .clean-mode #iphone-frame {
+            max-width: 100vw;
+            max-height: 100vh;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
         }
 
         canvas {
@@ -97,75 +114,34 @@
             z-index: 3;
             letter-spacing: 0.5px;
             backdrop-filter: blur(4px);
+            transition: opacity 0.3s;
         }
 
-        #rec-indicator {
+        .clean-mode .hd-badge {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #exit-clean-btn {
             position: absolute;
-            top: 14px;
-            right: 14px;
-            color: #ff2a55;
-            font-weight: bold;
-            font-size: 12px;
-            display: none;
-            align-items: center;
-            gap: 8px;
-            background: rgba(10,10,14,.9);
-            padding: 6px 14px;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 42, 85, 0.85);
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
             border-radius: 20px;
-            border: 1px solid rgba(255,42,85,.5);
-            z-index: 3;
-            backdrop-filter: blur(4px);
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            background: #ff2a55;
-            border-radius: 50%;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        #overlay-screen {
-            position: absolute;
-            inset: 0;
-            background: rgba(8,8,12,.96);
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            z-index: 10000;
             display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 20;
-            flex-direction: column;
-            text-align: center;
-            padding: 24px;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 0 15px rgba(255, 42, 85, 0.5);
         }
 
-        .spinner {
-            width: 44px;
-            height: 44px;
-            border: 4px solid rgba(0,251,255,.15);
-            border-radius: 50%;
-            border-top-color: #00fbff;
-            animation: spin .8s linear infinite;
-            margin-bottom: 16px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .export-dialog {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-            max-width: 300px;
+        .clean-mode #exit-clean-btn {
+            display: block;
         }
 
         .panel {
@@ -312,7 +288,7 @@
             cursor: pointer;
         }
 
-        .btn-primary, .btn-record, .btn-action {
+        .btn-primary, .btn-screenrec, .btn-action {
             padding: 11px;
             border: 1px solid #00fbff;
             background: #00fbff;
@@ -331,34 +307,14 @@
             box-shadow: 0 0 15px rgba(0, 251, 255, 0.4);
         }
 
-        .btn-record {
-            background: #ff2a55;
-            border-color: #ff2a55;
+        .btn-screenrec {
+            background: #8b5cf6;
+            border-color: #7c3aed;
             color: #fff;
         }
 
-        .btn-record:hover {
-            box-shadow: 0 0 15px rgba(255, 42, 85, 0.4);
-        }
-
-        .btn-action {
-            background: #10b981;
-            border-color: #059669;
-            color: #fff;
-            padding: 14px;
-            font-size: 13px;
-        }
-
-        .btn-secondary-action {
-            background: #334155;
-            border-color: #475569;
-            color: #fff;
-            padding: 12px;
-            font-size: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: 700;
+        .btn-screenrec:hover {
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
         }
 
         .margin-top-10 {
@@ -384,39 +340,22 @@
 </head>
 <body>
     <div class="app">
-        <div class="stage">
+        <div id="stage" class="stage">
+            <button id="exit-clean-btn">✕ SALIR DE PANTALLA COMPLETA</button>
             <div id="iphone-frame">
-                <div class="hd-badge">9:16 HD — 720×1280</div>
-                <div id="rec-indicator"><div class="dot"></div><span id="rec-time">REC 00:00</span></div>
-                
-                <!-- OVERLAY Y MODAL DE COMPARTIR NATIVO -->
-                <div id="overlay-screen">
-                    <div id="loading-box">
-                        <div class="spinner"></div>
-                        <div id="overlay-text" style="font-size:12px; font-weight:700; color:#fff;">PROCESANDO VÍDEO...</div>
-                    </div>
-                    
-                    <div id="share-box" class="export-dialog" style="display:none;">
-                        <h3 style="color:#00fbff; font-size:15px; margin-bottom:4px;">¡VÍDEO LISTO!</h3>
-                        <p style="font-size:11px; color:#cbd5e1; margin-bottom:12px;">Toca abajo para abrir la ventana de iOS y guardarlo directo en tu Galería o enviarlo a CapCut / TikTok:</p>
-                        <button id="shareBtn" class="btn-action">📲 GUARDAR EN GALERÍA / COMPARTIR</button>
-                        <button id="downloadBtn" class="btn-secondary-action">📂 Descargar en Archivos</button>
-                        <button id="closeOverlayBtn" class="btn-secondary-action" style="background:transparent; border:none; color:#64748b; margin-top:4px;">✕ Cerrar</button>
-                    </div>
-                </div>
-
+                <div class="hd-badge">9:16 HD • 3D EQUALIZER</div>
                 <canvas id="visualizer" width="720" height="1280"></canvas>
             </div>
         </div>
 
         <aside class="panel">
-            <h1>PHOTO BEAT SYNC STUDIO</h1>
-            <div class="sub">9:16 • VJ HARD TECHNO & RAVE STUDIO</div>
+            <h1>PHOTO BEAT SYNC 3D STUDIO</h1>
+            <div class="sub">ECUALIZADOR VOLUMÉTRICO & RITMO ACCENTUADO VJ</div>
 
             <div class="group-box">
                 <label>1. Fotografías (Hasta 120)</label>
                 <div id="dropZone" class="drop-zone">
-                    <span>Arrastra fotos aquí o haz clic (JPG, PNG, WEBP)</span>
+                    <span>Toca o arrastra fotos aquí (JPG, PNG, WEBP)</span>
                     <input id="photoFiles" type="file" multiple accept="image/jpeg,image/png,image/webp" style="display:none;">
                 </div>
                 <div class="photo-stats">Cargadas: <span id="photoCount">0</span> / 120</div>
@@ -424,131 +363,103 @@
             </div>
 
             <div class="group-box">
-                <label>2. Música y Sincronización</label>
+                <label>2. Música y Ritmo Beat-Sync</label>
                 <input id="audioFile" type="file" accept="audio/mp3, audio/m4a, audio/aac, audio/mpeg, .mp3, .m4a">
                 
                 <div class="row-2">
                     <div>
-                        <label>BPM Detectado</label>
-                        <input id="bpmInput" type="number" min="40" max="250" value="128" readonly>
+                        <label>BPM Pista</label>
+                        <input id="bpmInput" type="number" min="40" max="250" value="130">
                     </div>
                     <div>
-                        <label>Inicio Audio (s)</label>
-                        <input id="startTime" type="number" min="0" value="0" step="0.5">
-                    </div>
-                </div>
-
-                <div class="row-2">
-                    <div>
-                        <label>Duración Vídeo</label>
-                        <select id="durationSelect">
-                            <option value="15" selected>15 Segundos</option>
-                            <option value="30">30 Segundos</option>
-                            <option value="45">45 Segundos</option>
-                            <option value="60">60 Segundos</option>
-                            <option value="manual">Manual / Hasta fin</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>FPS de Grabación</label>
-                        <select id="exportFpsSelector">
-                            <option value="30" selected>30 FPS (Recomendado iOS)</option>
-                            <option value="60">60 FPS (Ultra Fluido)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="row-2" style="margin-top: 2px;">
-                    <div style="grid-column: span 2;">
-                        <label>Formato de Exportación</label>
-                        <select id="exportFormatSelector">
-                            <option value="mp4" selected>MP4 — H.264 (iOS Galería / TikTok)</option>
-                            <option value="webm">WebM — VP9 + Opus (Universal)</option>
+                        <label>Sincro de Golpe</label>
+                        <select id="beatSubdivision">
+                            <option value="1">1 Beat (Golpe Fuerte)</option>
+                            <option value="2" selected>2 Beats (Ritmo Estándar)</option>
+                            <option value="4">4 Beats (1 Compás)</option>
+                            <option value="0.5">1/2 Beat (Rápido Rave)</option>
                         </select>
                     </div>
                 </div>
             </div>
 
             <div class="group-box">
-                <label>3. Efectos y Ecualizador Circular</label>
+                <label>3. Render Ecualizador 3D Real</label>
                 <div class="row-2">
                     <div>
-                        <label>Efecto de Beat</label>
+                        <label>Efecto Al Golpe</label>
                         <select id="effectSelect">
-                            <option value="Beat Pulse" selected>Beat Pulse (Zoom)</option>
-                            <option value="Flash">Flash de Luz</option>
-                            <option value="Shake">Shake (Temblor Rave)</option>
+                            <option value="Beat Pulse" selected>Beat Pulse 3D (Zoom Snap)</option>
+                            <option value="Flash">Flash Strobo</option>
+                            <option value="Shake">Shake Hard Techno</option>
                             <option value="NeonGlowPulse">Pulso Neón Cyan</option>
-                            <option value="Strobe">Estroboscópico Extremo</option>
-                            <option value="None">Ninguno</option>
+                            <option value="Strobe">Estroboscópico Brutal</option>
+                            <option value="None">Sin Efecto</option>
                         </select>
                     </div>
                     <div>
                         <label>Transición Fotos</label>
                         <select id="transitionSelect">
-                            <option value="Crossfade" selected>Fundido Cruzado</option>
-                            <option value="Zoom">Zoom Dinámico</option>
-                            <option value="Slide">Desplazamiento Lateral</option>
-                            <option value="Cut">Corte Seco</option>
-                            <option value="BlurFade">Fundido con Desenfoque</option>
-                            <option value="FlashCut">Corte con Flash</option>
+                            <option value="SnapCut" selected>Snap Cut Accentuado</option>
+                            <option value="FlashCut">Flash Cut (Transición Luz)</option>
+                            <option value="Zoom">Zoom 3D Depth</option>
+                            <option value="Crossfade">Fundido Suave</option>
+                            <option value="Slide">Glitch Lateral</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="row-2" style="margin-top: 4px;">
                     <div>
-                        <label>Paleta de Colores</label>
+                        <label>Paleta Neón 3D</label>
                         <select id="colorPalette">
-                            <option value="neonAcid" selected>Neón Ácido (Cian / Rosa)</option>
-                            <option value="cyberGothic">Cyber-Gothic (Morado / Carmesí)</option>
-                            <option value="laserGreen">Láser Verde (Verde / Lima)</option>
+                            <option value="neonAcid" selected>Neón Cyan / Magenta</option>
+                            <option value="cyberGothic">Cyber Gothic Violet</option>
+                            <option value="laserGreen">Laser Acid Green</option>
+                            <option value="goldVolcanic">Gold Volcanic / Inferno</option>
                         </select>
                     </div>
                     <div>
-                        <label>Presets Visuales</label>
+                        <label>Preset VJ</label>
                         <select id="presetSelect">
                             <option value="custom" selected>Personalizado</option>
-                            <option value="hardTechno">Hard Techno (Brutal)</option>
-                            <option value="cyberRave">Rave Cyber-Gothic</option>
-                            <option value="acidLaser">Láser Ácido 200BPM</option>
+                            <option value="hardTechno">3D Hard Techno</option>
+                            <option value="cyberRave">Rave Cylinder 3D</option>
+                            <option value="acidLaser">Laser Ring 200BPM</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="slider-group">
-                    <div class="slider-label"><span>Intensidad EQ</span><span id="intensityVal">1.45</span></div>
-                    <input id="intensity" type="range" min="0.5" max="3.0" step="0.05" value="1.45">
+                    <div class="slider-label"><span>Extrusión / Altura 3D</span><span id="extrusionVal">2.2</span></div>
+                    <input id="extrusion" type="range" min="0.8" max="4.0" step="0.1" value="2.2">
                 </div>
 
                 <div class="slider-group">
-                    <div class="slider-label"><span>Puntas / Picos</span><span id="spikesVal">112</span></div>
-                    <input id="spikes" type="range" min="32" max="256" step="8" value="112">
+                    <div class="slider-label"><span>Inclinación Perspectiva (Persp Y)</span><span id="tiltVal">0.55</span></div>
+                    <input id="tilt" type="range" min="0.20" max="0.90" step="0.05" value="0.55">
                 </div>
 
                 <div class="slider-group">
-                    <div class="slider-label"><span>Radio del Círculo</span><span id="radiusVal">190</span></div>
-                    <input id="radius" type="range" min="80" max="350" step="5" value="190">
+                    <div class="slider-label"><span>Radio Anillo 3D</span><span id="radiusVal">180</span></div>
+                    <input id="radius" type="range" min="100" max="320" step="5" value="180">
                 </div>
 
                 <div class="slider-group">
-                    <div class="slider-label"><span>Brillo / Glow</span><span id="glowVal">25</span></div>
-                    <input id="glow" type="range" min="0" max="50" step="1" value="25">
+                    <div class="slider-label"><span>Sensibilidad del Bombo</span><span id="sensitivityVal">1.3</span></div>
+                    <input id="sensitivity" type="range" min="0.8" max="2.5" step="0.1" value="1.3">
                 </div>
             </div>
 
             <div class="row-2 margin-top-10">
-                <button id="previewBtn" class="btn-primary">▶ PREVISUALIZAR</button>
+                <button id="previewBtn" class="btn-primary">▶ REPRODUCIR</button>
                 <button id="pauseBtn" class="btn-primary" style="background: #eab308; border-color: #ca8a04; color: #000;">⏸ PAUSAR</button>
             </div>
             
-            <div class="row-2 margin-top-10">
-                <button id="recordBtn" class="btn-record">● GRABAR / EXPORTAR</button>
-                <button id="reloadBtn" class="btn-record" style="background: #dc2626; border-color: #b91c1c;">🔄 REINICIAR</button>
-            </div>
+            <button id="cleanModeBtn" class="btn-screenrec margin-top-10">📱 MODO PANTALLA COMPLETA (PARA GRABAR PANTALLA)</button>
 
             <div class="status">
-                <span id="status" class="badge">Listo • Exportación directa optimizada para Galería / TikTok / CapCut</span>
+                <span id="status" class="badge">Sincronización Beat 3D lista • Entra en Modo Pantalla Completa para grabar con el grabador de iOS</span>
             </div>
 
             <audio id="audio" style="display:none;" playsinline crossorigin="anonymous"></audio>
@@ -556,19 +467,21 @@
     </div>
 
     <script>
-        class BpmAnalyzer {
+        class AudioBeatEngine {
             constructor() {
                 this.audioContext = null;
                 this.analyserNode = null;
                 this.sourceNode = null;
-                this.gainNode = null;
-                this.mediaStreamDestination = null;
+                this.beatHistory = [];
+                this.lastBeatTime = 0;
+                this.isBeatHit = false;
+                this.beatIntensity = 0;
             }
 
-            setupAudioElement(audioEl) {
+            setupAudio(audioEl) {
                 if (!this.audioContext) {
-                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    this.audioContext = new AudioContextClass({ latencyHint: 'playback' });
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.audioContext = new AudioCtx({ latencyHint: 'interactive' });
                 }
 
                 if (this.audioContext.state === 'suspended') {
@@ -578,32 +491,56 @@
                 if (!this.sourceNode) {
                     try {
                         this.sourceNode = this.audioContext.createMediaElementSource(audioEl);
-                        
-                        // FFT reducido a 256 para evitar consumo excesivo de CPU en iOS Safari
                         this.analyserNode = this.audioContext.createAnalyser();
-                        this.analyserNode.fftSize = 256;
-                        this.analyserNode.smoothingTimeConstant = 0.8;
+                        this.analyserNode.fftSize = 512;
+                        this.analyserNode.smoothingTimeConstant = 0.75;
 
-                        this.gainNode = this.audioContext.createGain();
-                        this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
-
-                        // Conectar altavoces
                         this.sourceNode.connect(this.analyserNode);
                         this.analyserNode.connect(this.audioContext.destination);
-
-                        // Conectar bus limpio hacia la grabación (MediaRecorder)
-                        this.sourceNode.connect(this.gainNode);
-                        this.gainNode.connect(this.mediaStreamDestination);
                     } catch (e) {
-                        console.warn('Audio connection warning:', e);
+                        console.warn('Audio setup:', e);
                     }
                 }
-
                 return this.analyserNode;
+            }
+
+            analyzeBeat(sensitivity = 1.3) {
+                if (!this.analyserNode) return { bassEnergy: 0, isBeatHit: false, dataArray: null };
+
+                const bufferLength = this.analyserNode.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                this.analyserNode.getByteFrequencyData(dataArray);
+
+                // Analizar sub-bass y graves (primeros 12 bins de FFT)
+                let bassSum = 0;
+                const bassBins = 12;
+                for (let i = 0; i < bassBins; i++) {
+                    bassSum += dataArray[i];
+                }
+                const bassEnergy = (bassSum / bassBins) / 255.0;
+
+                // Detección dinámica de picos
+                this.beatHistory.push(bassEnergy);
+                if (this.beatHistory.length > 20) this.beatHistory.shift();
+
+                const avgEnergy = this.beatHistory.reduce((a, b) => a + b, 0) / this.beatHistory.length;
+                const now = performance.now();
+
+                // Disparo de Golpe de Bombo
+                if (bassEnergy > avgEnergy * sensitivity && (now - this.lastBeatTime) > 220 && bassEnergy > 0.35) {
+                    this.lastBeatTime = now;
+                    this.isBeatHit = true;
+                    this.beatIntensity = bassEnergy;
+                } else {
+                    this.isBeatHit = false;
+                    this.beatIntensity *= 0.88; // Decaimiento suave
+                }
+
+                return { bassEnergy, beatIntensity: this.beatIntensity, isBeatHit: this.isBeatHit, dataArray };
             }
         }
 
-        window.bpmAnalyzer = new BpmAnalyzer();
+        window.beatEngine = new AudioBeatEngine();
 
         class PhotoManager {
             constructor() {
@@ -627,33 +564,50 @@
                     }
                 });
             }
-
-            clear() {
-                this.photos = [];
-            }
         }
 
         window.photoManager = new PhotoManager();
 
-        class EffectsAndTransitions {
-            applyTransition(ctx, img1, img2, progress, type, w, h, vizInstance) {
+        class TransitionsAndEffects {
+            applyTransition(ctx, img1, img2, progress, type, w, h, vizInstance, beatHitIntensity) {
                 ctx.save();
-                const p = Math.max(0, Math.min(1, progress));
-                const activeType = type || 'Crossfade';
+                
+                // Curve de sincronización Snap para ritmo súper ajustado al bombo
+                let p = progress;
+                if (type === 'SnapCut') {
+                    p = progress < 0.85 ? 0 : (progress - 0.85) / 0.15;
+                } else {
+                    p = Math.pow(progress, 2.5); // Curva exponencial punchy
+                }
 
-                switch(activeType) {
-                    case 'Crossfade':
-                        vizInstance.drawImageCover(ctx, img1, w, h, 1);
-                        ctx.globalAlpha = p;
-                        vizInstance.drawImageCover(ctx, img2, w, h, 1);
+                switch(type) {
+                    case 'SnapCut':
+                        if (p < 0.5) {
+                            vizInstance.drawImageCover(ctx, img1, w, h, 1);
+                        } else {
+                            vizInstance.drawImageCover(ctx, img2, w, h, 1 + (beatHitIntensity * 0.05));
+                        }
                         break;
-                        
+
+                    case 'FlashCut':
+                        vizInstance.drawImageCover(ctx, img1, w, h, 1);
+                        if (p > 0.01) {
+                            ctx.globalAlpha = p;
+                            vizInstance.drawImageCover(ctx, img2, w, h, 1);
+                            
+                            if (p > 0.7) {
+                                ctx.fillStyle = `rgba(255, 255, 255, ${(1 - p) * 3})`;
+                                ctx.fillRect(0, 0, w, h);
+                            }
+                        }
+                        break;
+
                     case 'Zoom':
                         vizInstance.drawImageCover(ctx, img1, w, h, 1);
                         ctx.save();
                         ctx.globalAlpha = p;
                         ctx.translate(w / 2, h / 2);
-                        const scale = 0.82 + (p * 0.18);
+                        const scale = 0.75 + (p * 0.25);
                         ctx.scale(scale, scale);
                         ctx.translate(-w / 2, -h / 2);
                         vizInstance.drawImageCover(ctx, img2, w, h, 1);
@@ -668,34 +622,7 @@
                         ctx.restore();
                         break;
 
-                    case 'BlurFade':
-                        vizInstance.drawImageCover(ctx, img1, w, h, 1);
-                        ctx.globalAlpha = p;
-                        vizInstance.drawImageCover(ctx, img2, w, h, 1);
-                        if (p > 0.1 && p < 0.9) {
-                            ctx.fillStyle = `rgba(255, 255, 255, ${Math.sin(p * Math.PI) * 0.25})`;
-                            ctx.fillRect(0, 0, w, h);
-                        }
-                        break;
-                        
-                    case 'Cut':
-                        if (p < 0.5) {
-                            vizInstance.drawImageCover(ctx, img1, w, h, 1);
-                        } else {
-                            vizInstance.drawImageCover(ctx, img2, w, h, 1);
-                        }
-                        break;
-                        
-                    case 'FlashCut':
-                        if (p < 0.8) {
-                            vizInstance.drawImageCover(ctx, img1, w, h, 1);
-                        } else {
-                            vizInstance.drawImageCover(ctx, img2, w, h, 1);
-                            ctx.fillStyle = `rgba(255, 255, 255, ${(1 - p) * 4})`;
-                            ctx.fillRect(0, 0, w, h);
-                        }
-                        break;
-                        
+                    case 'Crossfade':
                     default:
                         vizInstance.drawImageCover(ctx, img1, w, h, 1);
                         ctx.globalAlpha = p;
@@ -705,40 +632,42 @@
                 ctx.restore();
             }
 
-            applyBeatEffect(ctx, w, h, effectType, bassIntensity) {
+            applyBeatEffect(ctx, w, h, effectType, bassIntensity, beatIntensity) {
                 if (!effectType || effectType === 'None') return;
                 ctx.save();
+
+                const combinedPower = Math.max(bassIntensity, beatIntensity);
                 
                 switch(effectType) {
                     case 'Beat Pulse':
-                        if (bassIntensity > 0.12) {
-                            const scale = 1 + (bassIntensity * 0.08);
+                        if (combinedPower > 0.15) {
+                            const scale = 1 + (combinedPower * 0.09);
                             ctx.translate(w / 2, h / 2);
                             ctx.scale(scale, scale);
                             ctx.translate(-w / 2, -h / 2);
                         }
                         break;
                     case 'Flash':
-                        if (bassIntensity > 0.28) {
-                            ctx.fillStyle = `rgba(255, 255, 255, ${bassIntensity * 0.4})`;
+                        if (combinedPower > 0.35) {
+                            ctx.fillStyle = `rgba(255, 255, 255, ${combinedPower * 0.5})`;
                             ctx.fillRect(0, 0, w, h);
                         }
                         break;
                     case 'Shake':
-                        if (bassIntensity > 0.32) {
-                            const factor = bassIntensity * 22;
+                        if (combinedPower > 0.3) {
+                            const factor = combinedPower * 28;
                             ctx.translate((Math.random() - 0.5) * factor, (Math.random() - 0.5) * factor);
                         }
                         break;
                     case 'NeonGlowPulse':
-                        if (bassIntensity > 0.18) {
-                            ctx.fillStyle = `rgba(0, 251, 255, ${bassIntensity * 0.28})`;
+                        if (combinedPower > 0.2) {
+                            ctx.fillStyle = `rgba(0, 251, 255, ${combinedPower * 0.3})`;
                             ctx.fillRect(0, 0, w, h);
                         }
                         break;
                     case 'Strobe':
-                        if (bassIntensity > 0.4) {
-                            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.45)' : 'rgba(255,0,85,0.45)';
+                        if (combinedPower > 0.4) {
+                            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(255,0,85,0.5)';
                             ctx.fillRect(0, 0, w, h);
                         }
                         break;
@@ -747,14 +676,14 @@
             }
         }
 
-        window.effectsAndTransitions = new EffectsAndTransitions();
+        window.transitionsAndEffects = new TransitionsAndEffects();
 
-        class Visualizer {
+        class VolumetricVisualizer3D {
             constructor() {
                 this.canvas = null;
                 this.ctx = null;
-                this.particles = [];
-                this.initParticles();
+                this.particles3D = [];
+                this.rotationAngle = 0;
             }
 
             init() {
@@ -762,29 +691,31 @@
                 if (this.canvas) {
                     this.ctx = this.canvas.getContext('2d');
                 }
+                this.init3DParticles();
             }
 
-            initParticles() {
-                this.particles = [];
-                for (let i = 0; i < 25; i++) {
-                    this.particles.push({
-                        x: Math.random() * 720,
-                        y: Math.random() * 1280,
-                        size: Math.random() * 3 + 1,
-                        speedX: (Math.random() - 0.5) * 1.2,
-                        speedY: (Math.random() - 0.5) * 1.2,
-                        alpha: Math.random() * 0.6 + 0.2
+            init3DParticles() {
+                this.particles3D = [];
+                for (let i = 0; i < 45; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = 100 + Math.random() * 250;
+                    this.particles3D.push({
+                        x: Math.cos(angle) * radius,
+                        y: (Math.random() - 0.5) * 300,
+                        z: Math.sin(angle) * radius,
+                        size: Math.random() * 3.5 + 1.5,
+                        speed: (Math.random() * 0.02) + 0.005
                     });
                 }
             }
 
-            getCurrentPaletteColors() {
-                const paletteSelect = document.getElementById('colorPalette');
-                const val = paletteSelect ? paletteSelect.value : 'neonAcid';
+            getPalette() {
+                const val = document.getElementById('colorPalette')?.value || 'neonAcid';
                 const palettes = {
-                    neonAcid: { primary: '#00fbff', secondary: '#ff00aa' },
-                    cyberGothic: { primary: '#9d00ff', secondary: '#ff0055' },
-                    laserGreen: { primary: '#00ff66', secondary: '#ccff00' }
+                    neonAcid: { primary: '#00fbff', secondary: '#ff00aa', dark: '#005577' },
+                    cyberGothic: { primary: '#b026ff', secondary: '#ff0055', dark: '#440066' },
+                    laserGreen: { primary: '#00ff66', secondary: '#ccff00', dark: '#005511' },
+                    goldVolcanic: { primary: '#ffaa00', secondary: '#ff2200', dark: '#662200' }
                 };
                 return palettes[val] || palettes.neonAcid;
             }
@@ -793,7 +724,7 @@
                 if (!img) return;
                 const imgRatio = img.width / img.height;
                 const canvasRatio = w / h;
-                let drawW, drawH, offsetX, offsetY;
+                let drawW, drawH;
 
                 if (imgRatio > canvasRatio) {
                     drawH = h * scaleMultiplier;
@@ -802,127 +733,201 @@
                     drawW = w * scaleMultiplier;
                     drawH = drawW / imgRatio;
                 }
-                offsetX = (w - drawW) / 2;
-                offsetY = (h - drawH) / 2;
+                const offsetX = (w - drawW) / 2;
+                const offsetY = (h - drawH) / 2;
                 ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
             }
 
-            renderFrame(analyser, photos, progress, settings) {
+            renderFrame(analyser, photos, photoProgress, settings, beatAnalysis) {
                 if (!this.ctx || !this.canvas) return;
                 const w = this.canvas.width;
                 const h = this.canvas.height;
 
-                this.ctx.fillStyle = '#050509';
+                this.ctx.fillStyle = '#040407';
                 this.ctx.fillRect(0, 0, w, h);
 
-                let bassIntensity = 0;
-                let dataArray = null;
+                const { bassEnergy, beatIntensity, dataArray } = beatAnalysis;
 
-                if (analyser) {
-                    const bufferLength = analyser.frequencyBinCount;
-                    dataArray = new Uint8Array(bufferLength);
-                    analyser.getByteFrequencyData(dataArray);
-
-                    const bassRangeCount = Math.floor(bufferLength * 0.3);
-                    let bassSum = 0;
-                    for (let i = 0; i < bassRangeCount; i++) {
-                        bassSum += dataArray[i];
-                    }
-                    bassIntensity = (bassSum / bassRangeCount) / 255.0;
-                }
-
+                // 1. Dibujar Imágenes con Transiciones de Ritmo
                 if (photos.length > 0) {
                     const total = photos.length;
-                    const currentIndex = Math.floor(progress) % total;
+                    const currentIndex = Math.floor(photoProgress) % total;
                     const nextIndex = (currentIndex + 1) % total;
-                    const transitionProgress = progress - Math.floor(progress);
+                    const transitionProgress = photoProgress - Math.floor(photoProgress);
 
                     const img1 = photos[currentIndex].img;
                     const img2 = photos[nextIndex].img;
 
-                    if (img1 && window.effectsAndTransitions) {
-                        window.effectsAndTransitions.applyTransition(
+                    if (img1 && window.transitionsAndEffects) {
+                        window.transitionsAndEffects.applyTransition(
                             this.ctx, img1, img2, transitionProgress, 
-                            settings.transition || 'Crossfade', w, h, this
+                            settings.transition || 'SnapCut', w, h, this, beatIntensity
                         );
                     }
                 }
 
-                if (window.effectsAndTransitions) {
-                    window.effectsAndTransitions.applyBeatEffect(this.ctx, w, h, settings.effect, bassIntensity);
+                // 2. Aplicar Efecto de Golpe (Flash / Pulse)
+                if (window.transitionsAndEffects) {
+                    window.transitionsAndEffects.applyBeatEffect(
+                        this.ctx, w, h, settings.effect, bassEnergy, beatIntensity
+                    );
                 }
 
-                this.renderParticles(w, h, bassIntensity);
-
+                // 3. Renderizado del Ecualizador 3D Real
                 if (dataArray) {
-                    this.drawCircularEQ(w, h, dataArray, settings, bassIntensity);
+                    this.draw3DEqualizer(w, h, dataArray, settings, bassEnergy, beatIntensity);
                 }
             }
 
-            renderParticles(w, h, bassIntensity) {
-                const colors = this.getCurrentPaletteColors();
-                this.ctx.save();
-                this.particles.forEach(p => {
-                    p.x += p.speedX * (1 + bassIntensity * 1.2);
-                    p.y += p.speedY * (1 + bassIntensity * 1.2);
-
-                    if (p.x < 0) p.x = w;
-                    if (p.x > w) p.x = 0;
-                    if (p.y < 0) p.y = h;
-                    if (p.y > h) p.y = 0;
-
-                    this.ctx.fillStyle = colors.primary;
-                    this.ctx.globalAlpha = p.alpha * (0.6 + bassIntensity * 0.8);
-                    this.ctx.beginPath();
-                    this.ctx.arc(p.x, p.y, p.size * (1 + bassIntensity), 0, Math.PI * 2);
-                    this.ctx.fill();
-                });
-                this.ctx.restore();
-            }
-
-            drawCircularEQ(w, h, dataArray, settings, bassIntensity) {
+            draw3DEqualizer(w, h, dataArray, settings, bassEnergy, beatIntensity) {
                 const cx = w / 2;
-                const cy = h / 2;
-                const radius = (settings.radius || 190) * (1 + bassIntensity * 0.18);
-                const spikes = settings.spikes || 112;
-                const colors = this.getCurrentPaletteColors();
+                const cy = h / 2 + 60; // Desplazamiento ligero para mejor enfoque 9:16
+                const radius = settings.radius || 180;
+                const tiltY = settings.tilt || 0.55; // Factor de perspectiva 3D
+                const extrusion = settings.extrusion || 2.2;
+                const colors = this.getPalette();
+
+                this.rotationAngle += 0.006 + (bassEnergy * 0.015);
+
+                const barsCount = 64; // Número óptimo para densidad 3D limpia
+                const step = (Math.PI * 2) / barsCount;
 
                 this.ctx.save();
                 this.ctx.translate(cx, cy);
 
-                // Halo por gradiente ultra ligero sin consumo de GPU/CPU excesivo
-                const outerRadius = radius * (1.25 + bassIntensity * 0.2);
-                const gradient = this.ctx.createRadialGradient(0, 0, radius * 0.6, 0, 0, outerRadius);
-                gradient.addColorStop(0, colors.primary + '35');
-                gradient.addColorStop(0.7, colors.secondary + '18');
-                gradient.addColorStop(1, 'transparent');
-                
-                this.ctx.fillStyle = gradient;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, outerRadius, 0, Math.PI * 2);
-                this.ctx.fill();
+                // --- PARTICULAS 3D EN EL ESPACIO ---
+                this.renderParticles3D(this.ctx, tiltY, colors, bassEnergy);
 
-                // Trazado del Ecualizador
+                // --- SOMBRA/GLOW DE BASE EN PERSPECTIVA 3D ---
+                this.ctx.save();
+                this.ctx.scale(1, tiltY);
+                const baseGradient = this.ctx.createRadialGradient(0, 0, radius * 0.5, 0, 0, radius * 1.5);
+                baseGradient.addColorStop(0, colors.primary + '55');
+                baseGradient.addColorStop(0.6, colors.secondary + '20');
+                baseGradient.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = baseGradient;
                 this.ctx.beginPath();
-                for (let i = 0; i < spikes; i++) {
-                    const angle = (i * 2 * Math.PI) / spikes;
-                    const val = dataArray[i % dataArray.length] / 255.0;
-                    const r = radius + (val * 110 * (settings.intensity || 1.45));
-                    const x = Math.cos(angle) * r;
-                    const y = Math.sin(angle) * r;
-                    if (i === 0) this.ctx.moveTo(x, y);
-                    else this.ctx.lineTo(x, y);
+                this.ctx.arc(0, 0, radius * 1.5, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.restore();
+
+                // --- BARRAS EXTRUIDAS EN 3D CON Z-SORTING ---
+                const renderList = [];
+
+                for (let i = 0; i < barsCount; i++) {
+                    const angle = (i * step) + this.rotationAngle;
+                    
+                    // Mapear frecuencia audio
+                    const dataIdx = Math.floor((i / barsCount) * (dataArray.length * 0.6));
+                    const val = dataArray[dataIdx] / 255.0;
+                    
+                    const barHeight = Math.max(12, val * 180 * extrusion * (1 + beatIntensity * 0.4));
+
+                    // Coordenadas base en el plano 3D (Z es profundidad)
+                    const cosA = Math.cos(angle);
+                    const sinA = Math.sin(angle);
+
+                    const xBase = cosA * radius;
+                    const zDepth = sinA * radius; // Utilizado para Z-ordering y sombreado
+                    const yBase = zDepth * tiltY;
+
+                    // Extrusión 3D Hacia Arriba (-Y)
+                    const xTop = xBase;
+                    const yTop = yBase - barHeight;
+
+                    // Escala de profundidad (caras lejanas se ven más oscuras)
+                    const depthFactor = (zDepth + radius) / (2 * radius); // 0 (lejos) a 1 (cerca)
+
+                    renderList.push({
+                        i, angle, xBase, yBase, xTop, yTop, zDepth, depthFactor, barHeight, cosA, sinA
+                    });
+                }
+
+                // Ordenar por Profundidad Z (de atrás hacia adelante)
+                renderList.sort((a, b) => a.zDepth - b.zDepth);
+
+                // Dibujar Anillo Base 3D
+                this.ctx.save();
+                this.ctx.beginPath();
+                for (let i = 0; i < renderList.length; i++) {
+                    const b = renderList[i];
+                    if (i === 0) this.ctx.moveTo(b.xBase, b.yBase);
+                    else this.ctx.lineTo(b.xBase, b.yBase);
                 }
                 this.ctx.closePath();
-                this.ctx.strokeStyle = colors.primary;
-                this.ctx.lineWidth = 3.5;
+                this.ctx.strokeStyle = colors.dark;
+                this.ctx.lineWidth = 6;
                 this.ctx.stroke();
+                this.ctx.restore();
+
+                // Dibujar Pilares 3D Extruidos
+                renderList.forEach(bar => {
+                    const { xBase, yBase, xTop, yTop, depthFactor, barHeight, cosA } = bar;
+                    
+                    const barWidth = Math.max(4, 9 * (0.6 + depthFactor * 0.5));
+                    
+                    // Gradiente Volumétrico por Pilar
+                    const pillarGrad = this.ctx.createLinearGradient(xBase, yBase, xTop, yTop);
+                    const alpha = 0.35 + (depthFactor * 0.65);
+                    pillarGrad.addColorStop(0, colors.dark);
+                    pillarGrad.addColorStop(0.5, colors.secondary);
+                    pillarGrad.addColorStop(1, colors.primary);
+
+                    // Caras Volumétricas
+                    this.ctx.save();
+                    this.ctx.globalAlpha = alpha;
+
+                    // Línea/Pilar Volumétrico Principal
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(xBase, yBase);
+                    this.ctx.lineTo(xTop, yTop);
+                    this.ctx.strokeStyle = pillarGrad;
+                    this.ctx.lineWidth = barWidth;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.stroke();
+
+                    // Tapa del Pilar (Highlight Brillante Specular 3D)
+                    this.ctx.beginPath();
+                    this.ctx.arc(xTop, yTop, barWidth * 0.6, 0, Math.PI * 2);
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.shadowColor = colors.primary;
+                    this.ctx.shadowBlur = 12 * depthFactor;
+                    this.ctx.fill();
+
+                    this.ctx.restore();
+                });
 
                 this.ctx.restore();
             }
+
+            renderParticles3D(ctx, tiltY, colors, bassEnergy) {
+                this.particles3D.forEach(p => {
+                    p.z += Math.cos(p.speed) * 2;
+                    
+                    // Rotación orbital
+                    const cosR = Math.cos(p.speed);
+                    const sinR = Math.sin(p.speed);
+                    const rx = p.x * cosR - p.z * sinR;
+                    const rz = p.x * sinR + p.z * cosR;
+                    p.x = rx;
+                    p.z = rz;
+
+                    const screenX = p.x;
+                    const screenY = p.y + (p.z * tiltY * 0.5);
+                    const scale = Math.max(0.2, (p.z + 300) / 600);
+
+                    ctx.save();
+                    ctx.fillStyle = colors.primary;
+                    ctx.globalAlpha = Math.min(1, scale * (0.4 + bassEnergy * 0.6));
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, p.size * scale * (1 + bassEnergy * 0.5), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                });
+            }
         }
 
-        window.visualizer = new Visualizer();
+        window.visualizer = new VolumetricVisualizer3D();
 
         document.addEventListener('DOMContentLoaded', () => {
             window.visualizer.init();
@@ -933,31 +938,15 @@
             const dropZone = document.getElementById('dropZone');
             const previewBtn = document.getElementById('previewBtn');
             const pauseBtn = document.getElementById('pauseBtn');
-            const recordBtn = document.getElementById('recordBtn');
-            const reloadBtn = document.getElementById('reloadBtn');
+            const cleanModeBtn = document.getElementById('cleanModeBtn');
+            const exitCleanBtn = document.getElementById('exit-clean-btn');
+            const stage = document.getElementById('stage');
             const statusBadge = document.getElementById('status');
-            const canvas = document.getElementById('visualizer');
             const photoCountEl = document.getElementById('photoCount');
             const thumbnailContainer = document.getElementById('thumbnailContainer');
 
-            // Elementos Modal Exportar
-            const overlayScreen = document.getElementById('overlay-screen');
-            const loadingBox = document.getElementById('loading-box');
-            const shareBox = document.getElementById('share-box');
-            const shareBtn = document.getElementById('shareBtn');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const closeOverlayBtn = document.getElementById('closeOverlayBtn');
-
-            let analyser = null;
             let isPlaying = false;
-            let isRecording = false;
-            let mediaRecorder = null;
-            let recordedChunks = [];
-            let selectedMimeType = '';
-            let recordStartTime = 0;
-            let targetDuration = 15;
-            let currentBpm = 128;
-            let generatedFile = null;
+            let currentBpm = 130;
 
             dropZone.addEventListener('click', () => photoInput.click());
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#00fbff'; });
@@ -980,18 +969,16 @@
                     img.src = p.src;
                     thumbnailContainer.appendChild(img);
                 });
-                statusBadge.textContent = `Fotos cargadas: ${photos.length} / 120`;
+                statusBadge.textContent = `Fotos listas: ${photos.length} / 120`;
             }
 
-            audioInput.addEventListener('change', async (e) => {
+            audioInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const url = URL.createObjectURL(file);
                     audioEl.src = url;
-                    analyser = window.bpmAnalyzer.setupAudioElement(audioEl);
-                    currentBpm = 128;
-                    document.getElementById('bpmInput').value = currentBpm;
-                    statusBadge.textContent = `Música cargada con éxito • BPM: ${currentBpm}`;
+                    window.beatEngine.setupAudio(audioEl);
+                    statusBadge.textContent = 'Música cargada • Lista para reproducir';
                 }
             });
 
@@ -1001,27 +988,24 @@
                 if (preset === 'hardTechno') {
                     document.getElementById('colorPalette').value = 'neonAcid';
                     document.getElementById('effectSelect').value = 'Strobe';
-                    document.getElementById('transitionSelect').value = 'FlashCut';
-                    updateSlider('intensity', 2.2);
-                    updateSlider('spikes', 160);
-                    updateSlider('radius', 210);
-                    updateSlider('glow', 35);
+                    document.getElementById('transitionSelect').value = 'SnapCut';
+                    updateSlider('extrusion', 3.0);
+                    updateSlider('tilt', 0.60);
+                    updateSlider('radius', 190);
                 } else if (preset === 'cyberRave') {
                     document.getElementById('colorPalette').value = 'cyberGothic';
                     document.getElementById('effectSelect').value = 'NeonGlowPulse';
                     document.getElementById('transitionSelect').value = 'Zoom';
-                    updateSlider('intensity', 1.6);
-                    updateSlider('spikes', 128);
-                    updateSlider('radius', 185);
-                    updateSlider('glow', 30);
+                    updateSlider('extrusion', 2.2);
+                    updateSlider('tilt', 0.45);
+                    updateSlider('radius', 170);
                 } else if (preset === 'acidLaser') {
                     document.getElementById('colorPalette').value = 'laserGreen';
                     document.getElementById('effectSelect').value = 'Shake';
-                    document.getElementById('transitionSelect').value = 'Slide';
-                    updateSlider('intensity', 1.8);
-                    updateSlider('spikes', 144);
-                    updateSlider('radius', 195);
-                    updateSlider('glow', 25);
+                    document.getElementById('transitionSelect').value = 'FlashCut';
+                    updateSlider('extrusion', 2.6);
+                    updateSlider('tilt', 0.65);
+                    updateSlider('radius', 200);
                 }
             });
 
@@ -1036,267 +1020,82 @@
 
             previewBtn.addEventListener('click', async () => {
                 if (window.photoManager.photos.length === 0 || !audioEl.src) {
-                    statusBadge.textContent = '⚠️ Carga al menos una foto y pista de audio';
+                    statusBadge.textContent = '⚠️ Carga imágenes y un tema musical';
                     return;
                 }
 
-                if (window.bpmAnalyzer && window.bpmAnalyzer.audioContext) {
-                    if (window.bpmAnalyzer.audioContext.state === 'suspended') {
-                        await window.bpmAnalyzer.audioContext.resume();
+                if (window.beatEngine && window.beatEngine.audioContext) {
+                    if (window.beatEngine.audioContext.state === 'suspended') {
+                        await window.beatEngine.audioContext.resume();
                     }
                 }
 
-                audioEl.currentTime = parseFloat(document.getElementById('startTime').value) || 0;
-                
                 try {
                     await audioEl.play();
                     isPlaying = true;
-                    isRecording = false;
                     requestAnimationFrame(loopAnimation);
-                    statusBadge.textContent = '▶ Previsualizando...';
+                    statusBadge.textContent = '▶ Reproduciendo a ritmo VJ 3D...';
                 } catch (err) {
-                    statusBadge.textContent = '⚠️ Toca de nuevo para permitir la reproducción';
+                    statusBadge.textContent = '⚠️ Haz clic de nuevo para habilitar reproducción';
                 }
             });
 
             pauseBtn.addEventListener('click', () => {
                 audioEl.pause();
                 isPlaying = false;
-                if(isRecording) stopRecording();
                 statusBadge.textContent = '⏸ En Pausa';
             });
 
-            reloadBtn.addEventListener('click', () => {
-                window.location.reload();
+            cleanModeBtn.addEventListener('click', () => {
+                stage.classList.add('clean-mode');
             });
 
-            recordBtn.addEventListener('click', async () => {
-                if (window.photoManager.photos.length === 0 || !audioEl.src) {
-                    statusBadge.textContent = '⚠️ Carga fotos y audio para iniciar la exportación';
-                    return;
-                }
-
-                if (isRecording) {
-                    stopRecording();
-                    return;
-                }
-
-                if (window.bpmAnalyzer && window.bpmAnalyzer.audioContext) {
-                    if (window.bpmAnalyzer.audioContext.state === 'suspended') {
-                        await window.bpmAnalyzer.audioContext.resume();
-                    }
-                }
-
-                recordedChunks = [];
-                const fps = parseInt(document.getElementById('exportFpsSelector').value) || 30;
-                const durStr = document.getElementById('durationSelect').value;
-                targetDuration = durStr === 'manual' ? 'manual' : parseInt(durStr);
-                const formatChoice = document.getElementById('exportFormatSelector').value;
-
-                const canvasStream = canvas.captureStream(fps);
-                let audioStream;
-                
-                try {
-                    if (window.bpmAnalyzer && window.bpmAnalyzer.mediaStreamDestination) {
-                        audioStream = window.bpmAnalyzer.mediaStreamDestination.stream;
-                    } else {
-                        audioStream = new MediaStream();
-                    }
-                } catch (e) {
-                    audioStream = new MediaStream();
-                }
-
-                const audioTracks = audioStream ? audioStream.getAudioTracks() : [];
-                const combinedStream = new MediaStream([
-                    ...canvasStream.getVideoTracks(),
-                    ...(audioTracks.length > 0 ? audioTracks : [])
-                ]);
-
-                let mimeTypes = [];
-                if (formatChoice === 'mp4') {
-                    mimeTypes = [
-                        'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
-                        'video/mp4;codecs=h264,aac',
-                        'video/mp4',
-                        'video/webm;codecs=vp9,opus'
-                    ];
-                } else {
-                    mimeTypes = [
-                        'video/webm;codecs=vp9,opus',
-                        'video/webm',
-                        'video/mp4'
-                    ];
-                }
-
-                selectedMimeType = '';
-                for (let mt of mimeTypes) {
-                    if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(mt)) {
-                        selectedMimeType = mt;
-                        break;
-                    }
-                }
-
-                if (!selectedMimeType) selectedMimeType = 'video/mp4';
-
-                // Tasa de bits de 3.5Mbps para evitar cortes de procesado en iOS
-                try {
-                    mediaRecorder = new MediaRecorder(combinedStream, { 
-                        mimeType: selectedMimeType, 
-                        videoBitsPerSecond: 3500000,
-                        audioBitsPerSecond: 128000
-                    });
-                } catch (e) {
-                    mediaRecorder = new MediaRecorder(combinedStream, { videoBitsPerSecond: 3500000 });
-                }
-
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data && event.data.size > 0) {
-                        recordedChunks.push(event.data);
-                    }
-                };
-
-                mediaRecorder.onstop = handleExportFinalization;
-
-                audioEl.currentTime = parseFloat(document.getElementById('startTime').value) || 0;
-                
-                try {
-                    await audioEl.play();
-                    mediaRecorder.start();
-                    isPlaying = true;
-                    isRecording = true;
-                    recordStartTime = Date.now();
-
-                    recordBtn.textContent = '⏹ DETENER GRABACIÓN';
-                    recordBtn.style.background = '#000';
-                    document.getElementById('rec-indicator').style.display = 'flex';
-                    
-                    statusBadge.textContent = `● Grabando (${selectedMimeType.includes('mp4') ? 'MP4' : 'WebM'} • ${fps} FPS)...`;
-                    requestAnimationFrame(loopAnimation);
-                } catch (err) {
-                    statusBadge.textContent = '⚠️ Error al iniciar grabación';
-                }
+            exitCleanBtn.addEventListener('click', () => {
+                stage.classList.remove('clean-mode');
             });
-
-            function stopRecording() {
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                }
-                audioEl.pause();
-                isPlaying = false;
-                isRecording = false;
-                recordBtn.textContent = '● GRABAR / EXPORTAR';
-                recordBtn.style.background = '';
-                document.getElementById('rec-indicator').style.display = 'none';
-                statusBadge.textContent = '✔ Procesando vídeo...';
-            }
-
-            async function handleExportFinalization() {
-                overlayScreen.style.display = 'flex';
-                loadingBox.style.display = 'flex';
-                shareBox.style.display = 'none';
-
-                setTimeout(() => {
-                    const ext = selectedMimeType.includes('mp4') ? 'mp4' : 'webm';
-                    const fileName = `BeatSync_${Date.now()}.${ext}`;
-                    const blob = new Blob(recordedChunks, { type: selectedMimeType });
-                    generatedFile = new File([blob], fileName, { type: selectedMimeType });
-
-                    loadingBox.style.display = 'none';
-                    shareBox.style.display = 'flex';
-                    statusBadge.textContent = '✔ Vídeo generado con éxito. Toca compartir.';
-                }, 500);
-            }
-
-            // BOTÓN DE ACCIÓN DIRECTA PARA ACTIVAR EL SHARE SHEET DE SAFARI/IOS
-            shareBtn.addEventListener('click', async () => {
-                if (!generatedFile) return;
-
-                if (navigator.canShare && navigator.canShare({ files: [generatedFile] })) {
-                    try {
-                        await navigator.share({
-                            files: [generatedFile],
-                            title: 'PHOTO BEAT SYNC STUDIO',
-                            text: 'Vídeo generado con BeatSync Studio'
-                        });
-                        statusBadge.textContent = '✔ Vídeo compartido / guardado';
-                        overlayScreen.style.display = 'none';
-                    } catch (err) {
-                        if (err.name !== 'AbortError') {
-                            fallbackDownload(generatedFile);
-                        }
-                    }
-                } else {
-                    fallbackDownload(generatedFile);
-                }
-            });
-
-            downloadBtn.addEventListener('click', () => {
-                if (generatedFile) {
-                    fallbackDownload(generatedFile);
-                }
-            });
-
-            closeOverlayBtn.addEventListener('click', () => {
-                overlayScreen.style.display = 'none';
-            });
-
-            function fallbackDownload(file) {
-                const url = URL.createObjectURL(file);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = file.name;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 100);
-                statusBadge.textContent = `✔ Archivo ${file.name} descargado`;
-                overlayScreen.style.display = 'none';
-            }
 
             function loopAnimation() {
-                if (!isPlaying && !isRecording) return;
-                
+                if (!isPlaying) return;
+
+                currentBpm = parseFloat(document.getElementById('bpmInput').value) || 130;
+                const subdiv = parseFloat(document.getElementById('beatSubdivision').value) || 2;
+                const sensitivity = parseFloat(document.getElementById('sensitivity').value) || 1.3;
+
+                // Analizar Beat
+                const beatAnalysis = window.beatEngine.analyzeBeat(sensitivity);
+
                 const currentTime = audioEl.currentTime || 0;
                 const secondsPerBeat = 60 / currentBpm;
-                const beatDuration = secondsPerBeat * 2; 
+                const transitionInterval = secondsPerBeat * subdiv; 
                 const totalPhotos = window.photoManager.photos.length || 1;
-                
-                const photoProgress = (currentTime / beatDuration) % totalPhotos;
+
+                const photoProgress = (currentTime / transitionInterval) % totalPhotos;
 
                 const settings = {
-                    intensity: parseFloat(document.getElementById('intensity').value),
-                    spikes: parseInt(document.getElementById('spikes').value),
+                    extrusion: parseFloat(document.getElementById('extrusion').value),
+                    tilt: parseFloat(document.getElementById('tilt').value),
                     radius: parseInt(document.getElementById('radius').value),
-                    glow: parseInt(document.getElementById('glow').value),
                     effect: document.getElementById('effectSelect').value,
                     transition: document.getElementById('transitionSelect').value
                 };
 
-                window.visualizer.renderFrame(analyser, window.photoManager.photos, photoProgress, settings);
+                window.visualizer.renderFrame(
+                    window.beatEngine.analyserNode, 
+                    window.photoManager.photos, 
+                    photoProgress, 
+                    settings, 
+                    beatAnalysis
+                );
 
-                if (isRecording) {
-                    const recElapsed = (Date.now() - recordStartTime) / 1000;
-                    const mins = String(Math.floor(recElapsed / 60)).padStart(2, '0');
-                    const secs = String(Math.floor(recElapsed % 60)).padStart(2, '0');
-                    document.getElementById('rec-time').textContent = `REC ${mins}:${secs}`;
-
-                    if (targetDuration !== 'manual' && recElapsed >= targetDuration) {
-                        stopRecording();
-                        return;
-                    }
-                }
-
-                if (!audioEl.ended && (isPlaying || isRecording)) {
+                if (!audioEl.ended && isPlaying) {
                     requestAnimationFrame(loopAnimation);
-                } else if (audioEl.ended && isRecording) {
-                    stopRecording();
+                } else if (audioEl.ended) {
+                    isPlaying = false;
+                    statusBadge.textContent = '✔ Reproducción finalizada';
                 }
             }
 
-            ['intensity', 'spikes', 'radius', 'glow'].forEach(id => {
+            ['extrusion', 'tilt', 'radius', 'sensitivity'].forEach(id => {
                 const el = document.getElementById(id);
                 const valEl = document.getElementById(id + 'Val');
                 if (el && valEl) {
