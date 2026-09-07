@@ -412,7 +412,7 @@
                         <label>FPS de Grabación</label>
                         <select id="exportFpsSelector">
                             <option value="60" selected>60 FPS (Fluido)</option>
-                            <option value="30">30 FPS (Ligero)</option>
+                            <option value="30">30 FPS (iOS Seguro)</option>
                         </select>
                     </div>
                 </div>
@@ -421,7 +421,7 @@
                     <div style="grid-column: span 2;">
                         <label>Formato de Exportación (Hardware Nativo)</label>
                         <select id="exportFormatSelector">
-                            <option value="mp4" selected>MP4 — H.264 (Hardware Directo sin WASM)</option>
+                            <option value="mp4" selected>MP4 — H.264 (iOS Nativo)</option>
                             <option value="webm">WebM — VP9 + Opus (Universal)</option>
                         </select>
                     </div>
@@ -507,7 +507,7 @@
             </div>
 
             <div class="status">
-                <span id="status" class="badge">Listo • Configura tus parámetros (Exportación Blindada por Hardware sin FFmpeg)</span>
+                <span id="status" class="badge">Listo • Configuración optimizada sin latencia de renderizado</span>
             </div>
 
             <audio id="audio" style="display:none;" playsinline crossorigin="anonymous"></audio>
@@ -526,7 +526,7 @@
             setupAudioElement(audioEl) {
                 if (!this.audioContext) {
                     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    this.audioContext = new AudioContextClass();
+                    this.audioContext = new AudioContextClass({ latencyHint: 'playback' });
                 }
 
                 if (this.audioContext.state === 'suspended') {
@@ -540,7 +540,6 @@
                         this.analyserNode.fftSize = 512;
                         this.analyserNode.smoothingTimeConstant = 0.82;
 
-                        // Clean stream destination for clickless MediaRecorder output
                         this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
 
                         this.sourceNode.connect(this.analyserNode);
@@ -553,11 +552,6 @@
 
                 return this.analyserNode;
             }
-
-            async detectBpm(audioBuffer) {
-                // Fallback BPM default for Hard Techno tracks
-                return 138;
-            }
         }
 
         window.bpmAnalyzer = new BpmAnalyzer();
@@ -569,8 +563,6 @@
 
             addFiles(fileList, onUpdate) {
                 const files = Array.from(fileList).slice(0, 120 - this.photos.length);
-                let loadedCount = 0;
-
                 files.forEach(file => {
                     if (file.type.startsWith('image/')) {
                         const reader = new FileReader();
@@ -578,7 +570,6 @@
                             const img = new Image();
                             img.onload = () => {
                                 this.photos.push({ name: file.name, img: img, src: e.target.result });
-                                loadedCount++;
                                 if (onUpdate) onUpdate(this.photos);
                             };
                             img.src = e.target.result;
@@ -621,9 +612,7 @@
                         break;
 
                     case 'Slide':
-                        ctx.save();
                         vizInstance.drawImageCover(ctx, img1, w, h, 1);
-                        ctx.restore();
                         ctx.save();
                         ctx.translate((1 - p) * w, 0);
                         vizInstance.drawImageCover(ctx, img2, w, h, 1);
@@ -728,13 +717,13 @@
 
             initParticles() {
                 this.particles = [];
-                for (let i = 0; i < 40; i++) {
+                for (let i = 0; i < 30; i++) {
                     this.particles.push({
                         x: Math.random() * 720,
                         y: Math.random() * 1280,
                         size: Math.random() * 3 + 1,
-                        speedX: (Math.random() - 0.5) * 1.5,
-                        speedY: (Math.random() - 0.5) * 1.5,
+                        speedX: (Math.random() - 0.5) * 1.2,
+                        speedY: (Math.random() - 0.5) * 1.2,
                         alpha: Math.random() * 0.6 + 0.2
                     });
                 }
@@ -744,9 +733,9 @@
                 const paletteSelect = document.getElementById('colorPalette');
                 const val = paletteSelect ? paletteSelect.value : 'neonAcid';
                 const palettes = {
-                    neonAcid: { primary: '#00fbff', secondary: '#ff00aa', shadow: '#ff00aa' },
-                    cyberGothic: { primary: '#9d00ff', secondary: '#ff0055', shadow: '#ff0055' },
-                    laserGreen: { primary: '#00ff66', secondary: '#ccff00', shadow: '#ccff00' }
+                    neonAcid: { primary: '#00fbff', secondary: '#ff00aa', shadow: 'rgba(255,0,170,0.6)' },
+                    cyberGothic: { primary: '#9d00ff', secondary: '#ff0055', shadow: 'rgba(255,0,85,0.6)' },
+                    laserGreen: { primary: '#00ff66', secondary: '#ccff00', shadow: 'rgba(204,255,0,0.6)' }
                 };
                 return palettes[val] || palettes.neonAcid;
             }
@@ -825,8 +814,8 @@
                 const colors = this.getCurrentPaletteColors();
                 this.ctx.save();
                 this.particles.forEach(p => {
-                    p.x += p.speedX * (1 + bassIntensity * 2);
-                    p.y += p.speedY * (1 + bassIntensity * 2);
+                    p.x += p.speedX * (1 + bassIntensity * 1.5);
+                    p.y += p.speedY * (1 + bassIntensity * 1.5);
 
                     if (p.x < 0) p.x = w;
                     if (p.x > w) p.x = 0;
@@ -852,14 +841,19 @@
                 this.ctx.save();
                 this.ctx.translate(cx, cy);
 
-                const gradient = this.ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius * 1.35);
-                gradient.addColorStop(0, colors.primary + '35');
+                // Halo de brillo usando gradiente radial ultra ligero (Cero lag en iOS Safari)
+                const outerRadius = radius * (1.3 + bassIntensity * 0.2);
+                const gradient = this.ctx.createRadialGradient(0, 0, radius * 0.6, 0, 0, outerRadius);
+                gradient.addColorStop(0, colors.primary + '40');
+                gradient.addColorStop(0.7, colors.secondary + '20');
                 gradient.addColorStop(1, 'transparent');
+                
                 this.ctx.fillStyle = gradient;
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, radius * 1.35, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, outerRadius, 0, Math.PI * 2);
                 this.ctx.fill();
 
+                // Trazado del ecualizador
                 this.ctx.beginPath();
                 for (let i = 0; i < spikes; i++) {
                     const angle = (i * 2 * Math.PI) / spikes;
@@ -873,8 +867,6 @@
                 this.ctx.closePath();
                 this.ctx.strokeStyle = colors.primary;
                 this.ctx.lineWidth = 3.5;
-                this.ctx.shadowBlur = (settings.glow !== undefined ? settings.glow : 25) + (bassIntensity * 35);
-                this.ctx.shadowColor = colors.shadow;
                 this.ctx.stroke();
 
                 this.ctx.restore();
@@ -909,7 +901,6 @@
             let targetDuration = 15;
             let currentBpm = 128;
 
-            // Photo Upload Handlers
             dropZone.addEventListener('click', () => photoInput.click());
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#00fbff'; });
             dropZone.addEventListener('dragleave', () => dropZone.style.borderColor = '#2e2e48');
@@ -934,7 +925,6 @@
                 statusBadge.textContent = `Fotos cargadas: ${photos.length} / 120`;
             }
 
-            // Audio Upload Handler
             audioInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -947,7 +937,6 @@
                 }
             });
 
-            // Preset Selector Handler
             const presetSelect = document.getElementById('presetSelect');
             presetSelect.addEventListener('change', (e) => {
                 const preset = e.target.value;
@@ -987,7 +976,6 @@
                 }
             }
 
-            // Preview Action
             previewBtn.addEventListener('click', async () => {
                 if (window.photoManager.photos.length === 0 || !audioEl.src) {
                     statusBadge.textContent = '⚠️ Carga al menos una foto y pista de audio';
@@ -1013,7 +1001,6 @@
                 }
             });
 
-            // Pause Action
             pauseBtn.addEventListener('click', () => {
                 audioEl.pause();
                 isPlaying = false;
@@ -1021,7 +1008,6 @@
                 statusBadge.textContent = '⏸ En Pausa';
             });
 
-            // Reload Action
             reloadBtn.addEventListener('click', () => {
                 window.location.reload();
             });
@@ -1099,13 +1085,19 @@
                 }
 
                 try {
-                    mediaRecorder = new MediaRecorder(combinedStream, { mimeType: selectedMimeType, videoBitsPerSecond: 8000000 });
+                    mediaRecorder = new MediaRecorder(combinedStream, { 
+                        mimeType: selectedMimeType, 
+                        videoBitsPerSecond: 6000000,
+                        audioBitsPerSecond: 128000
+                    });
                 } catch (e) {
-                    mediaRecorder = new MediaRecorder(combinedStream, { videoBitsPerSecond: 8000000 });
+                    mediaRecorder = new MediaRecorder(combinedStream, { videoBitsPerSecond: 6000000 });
                 }
 
                 mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) recordedChunks.push(event.data);
+                    if (event.data && event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
                 };
 
                 mediaRecorder.onstop = handleExportFinalization;
@@ -1114,7 +1106,7 @@
                 
                 try {
                     await audioEl.play();
-                    mediaRecorder.start(1000);
+                    mediaRecorder.start(500); // Timeslice constante de 500ms para evitar microcortes de buffer en iOS
                     isPlaying = true;
                     isRecording = true;
                     recordStartTime = Date.now();
@@ -1215,7 +1207,6 @@
                 }
             }
 
-            // Slider Listeners for UI Value updates
             ['intensity', 'spikes', 'radius', 'glow'].forEach(id => {
                 const el = document.getElementById(id);
                 const valEl = document.getElementById(id + 'Val');
