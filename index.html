@@ -134,7 +134,7 @@
         #overlay-screen {
             position: absolute;
             inset: 0;
-            background: rgba(8,8,12,.95);
+            background: rgba(8,8,12,.96);
             display: none;
             justify-content: center;
             align-items: center;
@@ -158,6 +158,14 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        .export-dialog {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 300px;
         }
 
         .panel {
@@ -304,7 +312,7 @@
             cursor: pointer;
         }
 
-        .btn-primary, .btn-record {
+        .btn-primary, .btn-record, .btn-action {
             padding: 11px;
             border: 1px solid #00fbff;
             background: #00fbff;
@@ -331,6 +339,26 @@
 
         .btn-record:hover {
             box-shadow: 0 0 15px rgba(255, 42, 85, 0.4);
+        }
+
+        .btn-action {
+            background: #10b981;
+            border-color: #059669;
+            color: #fff;
+            padding: 14px;
+            font-size: 13px;
+        }
+
+        .btn-secondary-action {
+            background: #334155;
+            border-color: #475569;
+            color: #fff;
+            padding: 12px;
+            font-size: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 700;
         }
 
         .margin-top-10 {
@@ -360,10 +388,23 @@
             <div id="iphone-frame">
                 <div class="hd-badge">9:16 HD — 720×1280</div>
                 <div id="rec-indicator"><div class="dot"></div><span id="rec-time">REC 00:00</span></div>
+                
+                <!-- OVERLAY Y MODAL DE COMPARTIR NATIVO -->
                 <div id="overlay-screen">
-                    <div class="spinner"></div>
-                    <div id="overlay-text">PROCESANDO VÍDEO...</div>
+                    <div id="loading-box">
+                        <div class="spinner"></div>
+                        <div id="overlay-text" style="font-size:12px; font-weight:700; color:#fff;">PROCESANDO VÍDEO...</div>
+                    </div>
+                    
+                    <div id="share-box" class="export-dialog" style="display:none;">
+                        <h3 style="color:#00fbff; font-size:15px; margin-bottom:4px;">¡VÍDEO LISTO!</h3>
+                        <p style="font-size:11px; color:#cbd5e1; margin-bottom:12px;">Toca abajo para abrir la ventana de iOS y guardarlo directo en tu Galería o enviarlo a CapCut / TikTok:</p>
+                        <button id="shareBtn" class="btn-action">📲 GUARDAR EN GALERÍA / COMPARTIR</button>
+                        <button id="downloadBtn" class="btn-secondary-action">📂 Descargar en Archivos</button>
+                        <button id="closeOverlayBtn" class="btn-secondary-action" style="background:transparent; border:none; color:#64748b; margin-top:4px;">✕ Cerrar</button>
+                    </div>
                 </div>
+
                 <canvas id="visualizer" width="720" height="1280"></canvas>
             </div>
         </div>
@@ -411,17 +452,17 @@
                     <div>
                         <label>FPS de Grabación</label>
                         <select id="exportFpsSelector">
-                            <option value="60" selected>60 FPS (Fluido)</option>
-                            <option value="30">30 FPS (iOS Seguro)</option>
+                            <option value="30" selected>30 FPS (Recomendado iOS)</option>
+                            <option value="60">60 FPS (Ultra Fluido)</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="row-2" style="margin-top: 2px;">
                     <div style="grid-column: span 2;">
-                        <label>Formato de Exportación (Hardware Nativo)</label>
+                        <label>Formato de Exportación</label>
                         <select id="exportFormatSelector">
-                            <option value="mp4" selected>MP4 — H.264 (iOS Nativo)</option>
+                            <option value="mp4" selected>MP4 — H.264 (iOS Galería / TikTok)</option>
                             <option value="webm">WebM — VP9 + Opus (Universal)</option>
                         </select>
                     </div>
@@ -507,7 +548,7 @@
             </div>
 
             <div class="status">
-                <span id="status" class="badge">Listo • Exportación directa habilitada para Galería / TikTok / CapCut</span>
+                <span id="status" class="badge">Listo • Exportación directa optimizada para Galería / TikTok / CapCut</span>
             </div>
 
             <audio id="audio" style="display:none;" playsinline crossorigin="anonymous"></audio>
@@ -520,6 +561,7 @@
                 this.audioContext = null;
                 this.analyserNode = null;
                 this.sourceNode = null;
+                this.gainNode = null;
                 this.mediaStreamDestination = null;
             }
 
@@ -536,18 +578,24 @@
                 if (!this.sourceNode) {
                     try {
                         this.sourceNode = this.audioContext.createMediaElementSource(audioEl);
+                        
+                        // FFT reducido a 256 para evitar consumo excesivo de CPU en iOS Safari
                         this.analyserNode = this.audioContext.createAnalyser();
-                        this.analyserNode.fftSize = 512;
-                        this.analyserNode.smoothingTimeConstant = 0.82;
+                        this.analyserNode.fftSize = 256;
+                        this.analyserNode.smoothingTimeConstant = 0.8;
 
+                        this.gainNode = this.audioContext.createGain();
                         this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
 
-                        // Conexiones de Audio
+                        // Conectar altavoces
                         this.sourceNode.connect(this.analyserNode);
                         this.analyserNode.connect(this.audioContext.destination);
-                        this.analyserNode.connect(this.mediaStreamDestination);
+
+                        // Conectar bus limpio hacia la grabación (MediaRecorder)
+                        this.sourceNode.connect(this.gainNode);
+                        this.gainNode.connect(this.mediaStreamDestination);
                     } catch (e) {
-                        console.warn('Audio node connection warning:', e);
+                        console.warn('Audio connection warning:', e);
                     }
                 }
 
@@ -718,7 +766,7 @@
 
             initParticles() {
                 this.particles = [];
-                for (let i = 0; i < 30; i++) {
+                for (let i = 0; i < 25; i++) {
                     this.particles.push({
                         x: Math.random() * 720,
                         y: Math.random() * 1280,
@@ -734,9 +782,9 @@
                 const paletteSelect = document.getElementById('colorPalette');
                 const val = paletteSelect ? paletteSelect.value : 'neonAcid';
                 const palettes = {
-                    neonAcid: { primary: '#00fbff', secondary: '#ff00aa', shadow: 'rgba(255,0,170,0.6)' },
-                    cyberGothic: { primary: '#9d00ff', secondary: '#ff0055', shadow: 'rgba(255,0,85,0.6)' },
-                    laserGreen: { primary: '#00ff66', secondary: '#ccff00', shadow: 'rgba(204,255,0,0.6)' }
+                    neonAcid: { primary: '#00fbff', secondary: '#ff00aa' },
+                    cyberGothic: { primary: '#9d00ff', secondary: '#ff0055' },
+                    laserGreen: { primary: '#00ff66', secondary: '#ccff00' }
                 };
                 return palettes[val] || palettes.neonAcid;
             }
@@ -775,7 +823,7 @@
                     dataArray = new Uint8Array(bufferLength);
                     analyser.getByteFrequencyData(dataArray);
 
-                    const bassRangeCount = Math.floor(bufferLength * 0.25);
+                    const bassRangeCount = Math.floor(bufferLength * 0.3);
                     let bassSum = 0;
                     for (let i = 0; i < bassRangeCount; i++) {
                         bassSum += dataArray[i];
@@ -815,8 +863,8 @@
                 const colors = this.getCurrentPaletteColors();
                 this.ctx.save();
                 this.particles.forEach(p => {
-                    p.x += p.speedX * (1 + bassIntensity * 1.5);
-                    p.y += p.speedY * (1 + bassIntensity * 1.5);
+                    p.x += p.speedX * (1 + bassIntensity * 1.2);
+                    p.y += p.speedY * (1 + bassIntensity * 1.2);
 
                     if (p.x < 0) p.x = w;
                     if (p.x > w) p.x = 0;
@@ -842,11 +890,11 @@
                 this.ctx.save();
                 this.ctx.translate(cx, cy);
 
-                // Halo de brillo ligero sin lag de GPU en iOS
-                const outerRadius = radius * (1.3 + bassIntensity * 0.2);
+                // Halo por gradiente ultra ligero sin consumo de GPU/CPU excesivo
+                const outerRadius = radius * (1.25 + bassIntensity * 0.2);
                 const gradient = this.ctx.createRadialGradient(0, 0, radius * 0.6, 0, 0, outerRadius);
-                gradient.addColorStop(0, colors.primary + '40');
-                gradient.addColorStop(0.7, colors.secondary + '20');
+                gradient.addColorStop(0, colors.primary + '35');
+                gradient.addColorStop(0.7, colors.secondary + '18');
                 gradient.addColorStop(1, 'transparent');
                 
                 this.ctx.fillStyle = gradient;
@@ -854,12 +902,12 @@
                 this.ctx.arc(0, 0, outerRadius, 0, Math.PI * 2);
                 this.ctx.fill();
 
-                // Trazado del ecualizador
+                // Trazado del Ecualizador
                 this.ctx.beginPath();
                 for (let i = 0; i < spikes; i++) {
                     const angle = (i * 2 * Math.PI) / spikes;
                     const val = dataArray[i % dataArray.length] / 255.0;
-                    const r = radius + (val * 115 * (settings.intensity || 1.45));
+                    const r = radius + (val * 110 * (settings.intensity || 1.45));
                     const x = Math.cos(angle) * r;
                     const y = Math.sin(angle) * r;
                     if (i === 0) this.ctx.moveTo(x, y);
@@ -892,6 +940,14 @@
             const photoCountEl = document.getElementById('photoCount');
             const thumbnailContainer = document.getElementById('thumbnailContainer');
 
+            // Elementos Modal Exportar
+            const overlayScreen = document.getElementById('overlay-screen');
+            const loadingBox = document.getElementById('loading-box');
+            const shareBox = document.getElementById('share-box');
+            const shareBtn = document.getElementById('shareBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const closeOverlayBtn = document.getElementById('closeOverlayBtn');
+
             let analyser = null;
             let isPlaying = false;
             let isRecording = false;
@@ -901,6 +957,7 @@
             let recordStartTime = 0;
             let targetDuration = 15;
             let currentBpm = 128;
+            let generatedFile = null;
 
             dropZone.addEventListener('click', () => photoInput.click());
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#00fbff'; });
@@ -998,7 +1055,7 @@
                     requestAnimationFrame(loopAnimation);
                     statusBadge.textContent = '▶ Previsualizando...';
                 } catch (err) {
-                    statusBadge.textContent = '⚠️ Toca de nuevo para permitir la reproducción de audio';
+                    statusBadge.textContent = '⚠️ Toca de nuevo para permitir la reproducción';
                 }
             });
 
@@ -1031,7 +1088,7 @@
                 }
 
                 recordedChunks = [];
-                const fps = parseInt(document.getElementById('exportFpsSelector').value) || 60;
+                const fps = parseInt(document.getElementById('exportFpsSelector').value) || 30;
                 const durStr = document.getElementById('durationSelect').value;
                 targetDuration = durStr === 'manual' ? 'manual' : parseInt(durStr);
                 const formatChoice = document.getElementById('exportFormatSelector').value;
@@ -1042,8 +1099,6 @@
                 try {
                     if (window.bpmAnalyzer && window.bpmAnalyzer.mediaStreamDestination) {
                         audioStream = window.bpmAnalyzer.mediaStreamDestination.stream;
-                    } else if (audioEl.captureStream) {
-                        audioStream = audioEl.captureStream();
                     } else {
                         audioStream = new MediaStream();
                     }
@@ -1081,18 +1136,17 @@
                     }
                 }
 
-                if (!selectedMimeType) {
-                    selectedMimeType = 'video/mp4';
-                }
+                if (!selectedMimeType) selectedMimeType = 'video/mp4';
 
+                // Tasa de bits de 3.5Mbps para evitar cortes de procesado en iOS
                 try {
                     mediaRecorder = new MediaRecorder(combinedStream, { 
                         mimeType: selectedMimeType, 
-                        videoBitsPerSecond: 6000000,
+                        videoBitsPerSecond: 3500000,
                         audioBitsPerSecond: 128000
                     });
                 } catch (e) {
-                    mediaRecorder = new MediaRecorder(combinedStream, { videoBitsPerSecond: 6000000 });
+                    mediaRecorder = new MediaRecorder(combinedStream, { videoBitsPerSecond: 3500000 });
                 }
 
                 mediaRecorder.ondataavailable = (event) => {
@@ -1107,7 +1161,6 @@
                 
                 try {
                     await audioEl.play();
-                    // Grabación continua sin timeslice para prevenir microcortes de audio en iOS AAC
                     mediaRecorder.start();
                     isPlaying = true;
                     isRecording = true;
@@ -1117,8 +1170,7 @@
                     recordBtn.style.background = '#000';
                     document.getElementById('rec-indicator').style.display = 'flex';
                     
-                    const extLabel = selectedMimeType.includes('mp4') ? 'MP4' : 'WebM';
-                    statusBadge.textContent = `● Grabando por Hardware (${extLabel} • ${fps} FPS)...`;
+                    statusBadge.textContent = `● Grabando (${selectedMimeType.includes('mp4') ? 'MP4' : 'WebM'} • ${fps} FPS)...`;
                     requestAnimationFrame(loopAnimation);
                 } catch (err) {
                     statusBadge.textContent = '⚠️ Error al iniciar grabación';
@@ -1135,61 +1187,73 @@
                 recordBtn.textContent = '● GRABAR / EXPORTAR';
                 recordBtn.style.background = '';
                 document.getElementById('rec-indicator').style.display = 'none';
-                statusBadge.textContent = '✔ Grabación detenida';
+                statusBadge.textContent = '✔ Procesando vídeo...';
             }
 
             async function handleExportFinalization() {
-                const overlay = document.getElementById('overlay-screen');
-                const overlayText = document.getElementById('overlay-text');
-                overlay.style.display = 'flex';
-                
-                const isMp4 = selectedMimeType.includes('mp4');
-                overlayText.textContent = 'PREPARANDO VÍDEO PARA COMPARTIR...';
+                overlayScreen.style.display = 'flex';
+                loadingBox.style.display = 'flex';
+                shareBox.style.display = 'none';
 
-                setTimeout(async () => {
-                    const ext = isMp4 ? 'mp4' : 'webm';
+                setTimeout(() => {
+                    const ext = selectedMimeType.includes('mp4') ? 'mp4' : 'webm';
                     const fileName = `BeatSync_${Date.now()}.${ext}`;
                     const blob = new Blob(recordedChunks, { type: selectedMimeType });
-                    const file = new File([blob], fileName, { type: selectedMimeType });
+                    generatedFile = new File([blob], fileName, { type: selectedMimeType });
 
-                    overlay.style.display = 'none';
-
-                    // Web Share API Nativa para iOS (Permite "Guardar vídeo" en Galería / CapCut / TikTok)
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        try {
-                            statusBadge.textContent = '📲 Abriendo menú de compartir en iPhone...';
-                            await navigator.share({
-                                files: [file],
-                                title: 'PHOTO BEAT SYNC STUDIO',
-                                text: 'Vídeo generado con Photo Beat Sync Studio'
-                            });
-                            statusBadge.textContent = '✔ Vídeo compartido o guardado con éxito';
-                        } catch (err) {
-                            if (err.name !== 'AbortError') {
-                                fallbackDownload(blob, fileName, ext);
-                            } else {
-                                statusBadge.textContent = '✔ Operación cancelada por el usuario';
-                            }
-                        }
-                    } else {
-                        fallbackDownload(blob, fileName, ext);
-                    }
-                }, 600);
+                    loadingBox.style.display = 'none';
+                    shareBox.style.display = 'flex';
+                    statusBadge.textContent = '✔ Vídeo generado con éxito. Toca compartir.';
+                }, 500);
             }
 
-            function fallbackDownload(blob, fileName, ext) {
-                const url = URL.createObjectURL(blob);
+            // BOTÓN DE ACCIÓN DIRECTA PARA ACTIVAR EL SHARE SHEET DE SAFARI/IOS
+            shareBtn.addEventListener('click', async () => {
+                if (!generatedFile) return;
+
+                if (navigator.canShare && navigator.canShare({ files: [generatedFile] })) {
+                    try {
+                        await navigator.share({
+                            files: [generatedFile],
+                            title: 'PHOTO BEAT SYNC STUDIO',
+                            text: 'Vídeo generado con BeatSync Studio'
+                        });
+                        statusBadge.textContent = '✔ Vídeo compartido / guardado';
+                        overlayScreen.style.display = 'none';
+                    } catch (err) {
+                        if (err.name !== 'AbortError') {
+                            fallbackDownload(generatedFile);
+                        }
+                    }
+                } else {
+                    fallbackDownload(generatedFile);
+                }
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                if (generatedFile) {
+                    fallbackDownload(generatedFile);
+                }
+            });
+
+            closeOverlayBtn.addEventListener('click', () => {
+                overlayScreen.style.display = 'none';
+            });
+
+            function fallbackDownload(file) {
+                const url = URL.createObjectURL(file);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = fileName;
+                a.download = file.name;
                 document.body.appendChild(a);
                 a.click();
                 setTimeout(() => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                 }, 100);
-                statusBadge.textContent = `✔ Archivo ${ext.toUpperCase()} descargado`;
+                statusBadge.textContent = `✔ Archivo ${file.name} descargado`;
+                overlayScreen.style.display = 'none';
             }
 
             function loopAnimation() {
@@ -1202,14 +1266,11 @@
                 
                 const photoProgress = (currentTime / beatDuration) % totalPhotos;
 
-                const glowInput = document.getElementById('glow');
-                const glowValue = glowInput ? parseInt(glowInput.value) : 25;
-
                 const settings = {
                     intensity: parseFloat(document.getElementById('intensity').value),
                     spikes: parseInt(document.getElementById('spikes').value),
                     radius: parseInt(document.getElementById('radius').value),
-                    glow: glowValue, 
+                    glow: parseInt(document.getElementById('glow').value),
                     effect: document.getElementById('effectSelect').value,
                     transition: document.getElementById('transitionSelect').value
                 };
