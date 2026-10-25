@@ -2,20 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PHOTO BEAT SYNC STUDIO 3D</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BeatSync3D">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHOTO BEAT SYNC 3D STUDIO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         body {
             background: #040406;
             color: #f1f5f9;
@@ -24,6 +14,7 @@
             justify-content: center;
             align-items: center;
             overflow-x: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
         .app {
@@ -288,37 +279,64 @@
             cursor: pointer;
         }
 
-        .btn-primary, .btn-screenrec, .btn-action {
-            padding: 11px;
-            border: 1px solid #00fbff;
-            background: #00fbff;
+        .btn-primary, .btn-screenrec {
+            padding: 14px;
+            border: 2px solid #00fbff;
+            background: linear-gradient(135deg, #00fbff, #0088ff);
             color: #000;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 12px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 14px;
             cursor: pointer;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             transition: all 0.2s;
             width: 100%;
             text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(0, 251, 255, 0.4);
+            animation: pulseGlow 2s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 10px rgba(0, 251, 255, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(0, 251, 255, 0.8); }
+            100% { box-shadow: 0 0 10px rgba(0, 251, 255, 0.4); }
         }
 
         .btn-primary:hover {
-            box-shadow: 0 0 15px rgba(0, 251, 255, 0.4);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(0, 251, 255, 0.9);
+        }
+
+        .btn-pause {
+            padding: 14px;
+            border: 2px solid #eab308;
+            background: linear-gradient(135deg, #eab308, #ca8a04);
+            color: #000;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 14px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            width: 100%;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
         }
 
         .btn-screenrec {
-            background: #8b5cf6;
-            border-color: #7c3aed;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border-color: #a78bfa;
             color: #fff;
+            animation: none;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
         }
 
         .btn-screenrec:hover {
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.8);
         }
 
         .margin-top-10 {
-            margin-top: 4px;
+            margin-top: 8px;
         }
 
         .status {
@@ -340,17 +358,19 @@
 </head>
 <body>
     <div class="app">
-        <div id="stage" class="stage">
-            <button id="exit-clean-btn">✕ SALIR DE PANTALLA COMPLETA</button>
+        <!-- Visualizer Stage -->
+        <main id="stage" class="stage">
             <div id="iphone-frame">
-                <div class="hd-badge">9:16 HD • 3D EQUALIZER</div>
-                <canvas id="visualizer" width="720" height="1280"></canvas>
+                <div class="hd-badge">3D VJ STUDIO v3.0</div>
+                <button id="exit-clean-btn">✖ Salir Pantalla Completa</button>
+                <canvas id="visualizer" width="1080" height="1920"></canvas>
             </div>
-        </div>
+        </main>
 
+        <!-- Control Panel -->
         <aside class="panel">
             <h1>PHOTO BEAT SYNC 3D STUDIO</h1>
-            <div class="sub">ECUALIZADOR VOLUMÉTRICO & RITMO ACCENTUADO VJ</div>
+            <div class="sub">TÚNEL 3D POTENCIADO & NUEVOS EFECTOS VJ PRO</div>
 
             <div class="group-box">
                 <label>1. Fotografías (Hasta 120)</label>
@@ -384,16 +404,26 @@
             </div>
 
             <div class="group-box">
-                <label>3. Render Ecualizador 3D Real</label>
+                <label>3. Render y Estilo de Ecualizador 3D</label>
+                
+                <div style="margin-bottom: 6px;">
+                    <label>Estilo de Ecualizador 3D</label>
+                    <select id="equalizerStyle3D">
+                        <option value="waveformTunnel" selected>隧道 Túnel de Ondas 3D (Ultra Cuerpo)</option>
+                        <option value="circularRing">Anillo Volumétrico Circular 3D</option>
+                        <option value="matrixGrid">Matriz Cyber Grid 3D (Piso Perspectiva)</option>
+                    </select>
+                </div>
+
                 <div class="row-2">
                     <div>
                         <label>Efecto Al Golpe</label>
                         <select id="effectSelect">
                             <option value="Beat Pulse" selected>Beat Pulse 3D (Zoom Snap)</option>
+                            <option value="GlitchRGB" selected>Glitch RGB / Aberración</option>
                             <option value="Flash">Flash Strobo</option>
                             <option value="Shake">Shake Hard Techno</option>
                             <option value="NeonGlowPulse">Pulso Neón Cyan</option>
-                            <option value="Strobe">Estroboscópico Brutal</option>
                             <option value="None">Sin Efecto</option>
                         </select>
                     </div>
@@ -420,19 +450,17 @@
                         </select>
                     </div>
                     <div>
-                        <label>Preset VJ</label>
-                        <select id="presetSelect">
-                            <option value="custom" selected>Personalizado</option>
-                            <option value="hardTechno">3D Hard Techno</option>
-                            <option value="cyberRave">Rave Cylinder 3D</option>
-                            <option value="acidLaser">Laser Ring 200BPM</option>
+                        <label>Modo VJ Auto-Pilot</label>
+                        <select id="autoPilot">
+                            <option value="off" selected>Desactivado (Estático)</option>
+                            <option value="on">Activado (Cambia de Estilo al Beat)</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="slider-group">
-                    <div class="slider-label"><span>Extrusión / Altura 3D</span><span id="extrusionVal">2.2</span></div>
-                    <input id="extrusion" type="range" min="0.8" max="4.0" step="0.1" value="2.2">
+                    <div class="slider-label"><span>Extrusión / Profundidad 3D</span><span id="extrusionVal">3.0</span></div>
+                    <input id="extrusion" type="range" min="1.0" max="5.0" step="0.1" value="3.0">
                 </div>
 
                 <div class="slider-group">
@@ -441,8 +469,8 @@
                 </div>
 
                 <div class="slider-group">
-                    <div class="slider-label"><span>Radio Anillo 3D</span><span id="radiusVal">180</span></div>
-                    <input id="radius" type="range" min="100" max="320" step="5" value="180">
+                    <div class="slider-label"><span>Radio / Ancho 3D</span><span id="radiusVal">200</span></div>
+                    <input id="radius" type="range" min="100" max="320" step="5" value="200">
                 </div>
 
                 <div class="slider-group">
@@ -451,15 +479,19 @@
                 </div>
             </div>
 
-            <div class="row-2 margin-top-10">
-                <button id="previewBtn" class="btn-primary">▶ REPRODUCIR</button>
-                <button id="pauseBtn" class="btn-primary" style="background: #eab308; border-color: #ca8a04; color: #000;">⏸ PAUSAR</button>
+            <!-- CONTROLES DE REPRODUCCIÓN DESTACADOS -->
+            <div class="group-box" style="border: 2px solid rgba(0, 251, 255, 0.4); background: #121829;">
+                <label style="color: #00fbff; text-align: center; margin-bottom: 2px;">⚡ CENTRO DE CONTROL DE REPRODUCCIÓN</label>
+                <div class="row-2">
+                    <button id="previewBtn" class="btn-primary">▶ REPRODUCIR</button>
+                    <button id="pauseBtn" class="btn-pause">⏸ PAUSAR</button>
+                </div>
             </div>
             
             <button id="cleanModeBtn" class="btn-screenrec margin-top-10">📱 MODO PANTALLA COMPLETA (PARA GRABAR PANTALLA)</button>
 
             <div class="status">
-                <span id="status" class="badge">Sincronización Beat 3D lista • Entra en Modo Pantalla Completa para grabar con el grabador de iOS</span>
+                <span id="status" class="badge">Túnel de Ondas 3D potenciado • Nuevo Auto-Pilot y Glitch RGB VJ</span>
             </div>
 
             <audio id="audio" style="display:none;" playsinline crossorigin="anonymous"></audio>
@@ -493,7 +525,7 @@
                         this.sourceNode = this.audioContext.createMediaElementSource(audioEl);
                         this.analyserNode = this.audioContext.createAnalyser();
                         this.analyserNode.fftSize = 512;
-                        this.analyserNode.smoothingTimeConstant = 0.75;
+                        this.analyserNode.smoothingTimeConstant = 0.70;
 
                         this.sourceNode.connect(this.analyserNode);
                         this.analyserNode.connect(this.audioContext.destination);
@@ -511,29 +543,26 @@
                 const dataArray = new Uint8Array(bufferLength);
                 this.analyserNode.getByteFrequencyData(dataArray);
 
-                // Analizar sub-bass y graves (primeros 12 bins de FFT)
                 let bassSum = 0;
-                const bassBins = 12;
+                const bassBins = 14;
                 for (let i = 0; i < bassBins; i++) {
                     bassSum += dataArray[i];
                 }
                 const bassEnergy = (bassSum / bassBins) / 255.0;
 
-                // Detección dinámica de picos
                 this.beatHistory.push(bassEnergy);
                 if (this.beatHistory.length > 20) this.beatHistory.shift();
 
                 const avgEnergy = this.beatHistory.reduce((a, b) => a + b, 0) / this.beatHistory.length;
                 const now = performance.now();
 
-                // Disparo de Golpe de Bombo
-                if (bassEnergy > avgEnergy * sensitivity && (now - this.lastBeatTime) > 220 && bassEnergy > 0.35) {
+                if (bassEnergy > avgEnergy * sensitivity && (now - this.lastBeatTime) > 200 && bassEnergy > 0.32) {
                     this.lastBeatTime = now;
                     this.isBeatHit = true;
                     this.beatIntensity = bassEnergy;
                 } else {
                     this.isBeatHit = false;
-                    this.beatIntensity *= 0.88; // Decaimiento suave
+                    this.beatIntensity *= 0.85;
                 }
 
                 return { bassEnergy, beatIntensity: this.beatIntensity, isBeatHit: this.isBeatHit, dataArray };
@@ -571,13 +600,11 @@
         class TransitionsAndEffects {
             applyTransition(ctx, img1, img2, progress, type, w, h, vizInstance, beatHitIntensity) {
                 ctx.save();
-                
-                // Curve de sincronización Snap para ritmo súper ajustado al bombo
                 let p = progress;
                 if (type === 'SnapCut') {
                     p = progress < 0.85 ? 0 : (progress - 0.85) / 0.15;
                 } else {
-                    p = Math.pow(progress, 2.5); // Curva exponencial punchy
+                    p = Math.pow(progress, 2.5);
                 }
 
                 switch(type) {
@@ -588,20 +615,17 @@
                             vizInstance.drawImageCover(ctx, img2, w, h, 1 + (beatHitIntensity * 0.05));
                         }
                         break;
-
                     case 'FlashCut':
                         vizInstance.drawImageCover(ctx, img1, w, h, 1);
                         if (p > 0.01) {
                             ctx.globalAlpha = p;
                             vizInstance.drawImageCover(ctx, img2, w, h, 1);
-                            
                             if (p > 0.7) {
                                 ctx.fillStyle = `rgba(255, 255, 255, ${(1 - p) * 3})`;
                                 ctx.fillRect(0, 0, w, h);
                             }
                         }
                         break;
-
                     case 'Zoom':
                         vizInstance.drawImageCover(ctx, img1, w, h, 1);
                         ctx.save();
@@ -613,7 +637,6 @@
                         vizInstance.drawImageCover(ctx, img2, w, h, 1);
                         ctx.restore();
                         break;
-
                     case 'Slide':
                         vizInstance.drawImageCover(ctx, img1, w, h, 1);
                         ctx.save();
@@ -621,7 +644,6 @@
                         vizInstance.drawImageCover(ctx, img2, w, h, 1);
                         ctx.restore();
                         break;
-
                     case 'Crossfade':
                     default:
                         vizInstance.drawImageCover(ctx, img1, w, h, 1);
@@ -635,39 +657,40 @@
             applyBeatEffect(ctx, w, h, effectType, bassIntensity, beatIntensity) {
                 if (!effectType || effectType === 'None') return;
                 ctx.save();
-
                 const combinedPower = Math.max(bassIntensity, beatIntensity);
                 
                 switch(effectType) {
                     case 'Beat Pulse':
                         if (combinedPower > 0.15) {
-                            const scale = 1 + (combinedPower * 0.09);
+                            const scale = 1 + (combinedPower * 0.1);
                             ctx.translate(w / 2, h / 2);
                             ctx.scale(scale, scale);
                             ctx.translate(-w / 2, -h / 2);
                         }
                         break;
+                    case 'GlitchRGB':
+                        if (combinedPower > 0.25) {
+                            ctx.fillStyle = `rgba(255, 0, 85, ${combinedPower * 0.22})`;
+                            ctx.fillRect(-10, 0, w, h);
+                            ctx.fillStyle = `rgba(0, 251, 255, ${combinedPower * 0.22})`;
+                            ctx.fillRect(10, 0, w, h);
+                        }
+                        break;
                     case 'Flash':
                         if (combinedPower > 0.35) {
-                            ctx.fillStyle = `rgba(255, 255, 255, ${combinedPower * 0.5})`;
+                            ctx.fillStyle = `rgba(255, 255, 255, ${combinedPower * 0.55})`;
                             ctx.fillRect(0, 0, w, h);
                         }
                         break;
                     case 'Shake':
                         if (combinedPower > 0.3) {
-                            const factor = combinedPower * 28;
+                            const factor = combinedPower * 32;
                             ctx.translate((Math.random() - 0.5) * factor, (Math.random() - 0.5) * factor);
                         }
                         break;
                     case 'NeonGlowPulse':
                         if (combinedPower > 0.2) {
-                            ctx.fillStyle = `rgba(0, 251, 255, ${combinedPower * 0.3})`;
-                            ctx.fillRect(0, 0, w, h);
-                        }
-                        break;
-                    case 'Strobe':
-                        if (combinedPower > 0.4) {
-                            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(255,0,85,0.5)';
+                            ctx.fillStyle = `rgba(0, 251, 255, ${combinedPower * 0.35})`;
                             ctx.fillRect(0, 0, w, h);
                         }
                         break;
@@ -684,6 +707,7 @@
                 this.ctx = null;
                 this.particles3D = [];
                 this.rotationAngle = 0;
+                this.tunnelZ = 0;
             }
 
             init() {
@@ -696,15 +720,15 @@
 
             init3DParticles() {
                 this.particles3D = [];
-                for (let i = 0; i < 45; i++) {
+                for (let i = 0; i < 60; i++) {
                     const angle = Math.random() * Math.PI * 2;
-                    const radius = 100 + Math.random() * 250;
+                    const radius = 80 + Math.random() * 280;
                     this.particles3D.push({
                         x: Math.cos(angle) * radius,
-                        y: (Math.random() - 0.5) * 300,
+                        y: (Math.random() - 0.5) * 400,
                         z: Math.sin(angle) * radius,
-                        size: Math.random() * 3.5 + 1.5,
-                        speed: (Math.random() * 0.02) + 0.005
+                        size: Math.random() * 4 + 1.5,
+                        speed: (Math.random() * 0.025) + 0.008
                     });
                 }
             }
@@ -712,10 +736,10 @@
             getPalette() {
                 const val = document.getElementById('colorPalette')?.value || 'neonAcid';
                 const palettes = {
-                    neonAcid: { primary: '#00fbff', secondary: '#ff00aa', dark: '#005577' },
-                    cyberGothic: { primary: '#b026ff', secondary: '#ff0055', dark: '#440066' },
-                    laserGreen: { primary: '#00ff66', secondary: '#ccff00', dark: '#005511' },
-                    goldVolcanic: { primary: '#ffaa00', secondary: '#ff2200', dark: '#662200' }
+                    neonAcid: { primary: '#00fbff', secondary: '#ff00aa', dark: '#005577', accent: '#38bdf8' },
+                    cyberGothic: { primary: '#b026ff', secondary: '#ff0055', dark: '#440066', accent: '#e879f9' },
+                    laserGreen: { primary: '#00ff66', secondary: '#ccff00', dark: '#005511', accent: '#4ade80' },
+                    goldVolcanic: { primary: '#ffaa00', secondary: '#ff2200', dark: '#662200', accent: '#facc15' }
                 };
                 return palettes[val] || palettes.neonAcid;
             }
@@ -748,7 +772,6 @@
 
                 const { bassEnergy, beatIntensity, dataArray } = beatAnalysis;
 
-                // 1. Dibujar Imágenes con Transiciones de Ritmo
                 if (photos.length > 0) {
                     const total = photos.length;
                     const currentIndex = Math.floor(photoProgress) % total;
@@ -766,118 +789,160 @@
                     }
                 }
 
-                // 2. Aplicar Efecto de Golpe (Flash / Pulse)
                 if (window.transitionsAndEffects) {
                     window.transitionsAndEffects.applyBeatEffect(
                         this.ctx, w, h, settings.effect, bassEnergy, beatIntensity
                     );
                 }
 
-                // 3. Renderizado del Ecualizador 3D Real
                 if (dataArray) {
-                    this.draw3DEqualizer(w, h, dataArray, settings, bassEnergy, beatIntensity);
+                    const style3D = document.getElementById('equalizerStyle3D')?.value || 'waveformTunnel';
+                    
+                    if (style3D === 'waveformTunnel') {
+                        this.drawWaveformTunnel3D(w, h, dataArray, settings, bassEnergy, beatIntensity);
+                    } else if (style3D === 'matrixGrid') {
+                        this.drawMatrixGrid3D(w, h, dataArray, settings, bassEnergy, beatIntensity);
+                    } else {
+                        this.draw3DEqualizer(w, h, dataArray, settings, bassEnergy, beatIntensity);
+                    }
                 }
             }
 
-            draw3DEqualizer(w, h, dataArray, settings, bassEnergy, beatIntensity) {
+            drawWaveformTunnel3D(w, h, dataArray, settings, bassEnergy, beatIntensity) {
                 const cx = w / 2;
-                const cy = h / 2 + 60; // Desplazamiento ligero para mejor enfoque 9:16
-                const radius = settings.radius || 180;
-                const tiltY = settings.tilt || 0.55; // Factor de perspectiva 3D
-                const extrusion = settings.extrusion || 2.2;
+                const cy = h / 2;
                 const colors = this.getPalette();
+                const extrusion = settings.extrusion || 3.0;
+                const baseRadius = settings.radius || 200;
 
-                this.rotationAngle += 0.006 + (bassEnergy * 0.015);
-
-                const barsCount = 64; // Número óptimo para densidad 3D limpia
-                const step = (Math.PI * 2) / barsCount;
+                // Velocidad del túnel aumentada dinámicamente con la energía del bajo y el beat
+                this.tunnelZ = (this.tunnelZ + 2.5 + (bassEnergy * 8) + (beatIntensity * 12)) % 60;
+                const ringsCount = 12;
 
                 this.ctx.save();
                 this.ctx.translate(cx, cy);
 
-                // --- PARTICULAS 3D EN EL ESPACIO ---
-                this.renderParticles3D(this.ctx, tiltY, colors, bassEnergy);
+                // Dibujar rayos de luz de profundidad con el color primario de la paleta activa
+                this.ctx.strokeStyle = colors.primary + '55';
+                this.ctx.lineWidth = 2;
+                const rayCount = 16;
+                for (let r = 0; r < rayCount; r++) {
+                    const angle = (r / rayCount) * Math.PI * 2 + (this.tunnelZ * 0.015);
+                    const outerX = Math.cos(angle) * (baseRadius * 1.8);
+                    const outerY = Math.sin(angle) * (baseRadius * 1.8);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, 0);
+                    this.ctx.lineTo(outerX, outerY);
+                    this.ctx.stroke();
+                }
 
-                // --- SOMBRA/GLOW DE BASE EN PERSPECTIVA 3D ---
-                this.ctx.save();
-                this.ctx.scale(1, tiltY);
-                const baseGradient = this.ctx.createRadialGradient(0, 0, radius * 0.5, 0, 0, radius * 1.5);
-                baseGradient.addColorStop(0, colors.primary + '55');
-                baseGradient.addColorStop(0.6, colors.secondary + '20');
-                baseGradient.addColorStop(1, 'transparent');
-                this.ctx.fillStyle = baseGradient;
+                // Dibujar anillos concéntricos con la paleta de colores y reactividad total
+                for (let i = ringsCount; i >= 1; i--) {
+                    const depthFactor = i / ringsCount; 
+                    const ringR = baseRadius * depthFactor * (1 + (beatIntensity * 0.35)) + (this.tunnelZ * depthFactor * 2);
+                    
+                    if (ringR < 10) continue;
+
+                    this.ctx.beginPath();
+                    const points = 64;
+                    for (let p = 0; p <= points; p++) {
+                        const angle = (p / points) * Math.PI * 2;
+                        const dataIdx = Math.floor((p / points) * (dataArray.length * 0.7));
+                        const audioVal = (dataArray[dataIdx] / 255.0) * extrusion * 45;
+                        
+                        const deformedR = ringR + (audioVal * depthFactor * (1.5 + bassEnergy * 1.5));
+                        const x = Math.cos(angle) * deformedR;
+                        const y = Math.sin(angle) * deformedR * 0.75;
+
+                        if (p === 0) this.ctx.moveTo(x, y);
+                        else this.ctx.lineTo(x, y);
+                    }
+                    this.ctx.closePath();
+
+                    const ringGrad = this.ctx.createRadialGradient(0, 0, ringR * 0.4, 0, 0, ringR);
+                    ringGrad.addColorStop(0, colors.dark);
+                    // Alternancia de colores viva usando la paleta seleccionada
+                    ringGrad.addColorStop(0.6, i % 2 === 0 ? colors.primary : colors.secondary);
+                    ringGrad.addColorStop(1, colors.accent);
+
+                    this.ctx.strokeStyle = ringGrad;
+                    this.ctx.lineWidth = Math.max(2, (5 * depthFactor) + (bassEnergy * 4) + (beatIntensity * 3));
+                    this.ctx.globalAlpha = Math.min(1, depthFactor * 1.3 + (beatIntensity * 0.6));
+                    
+                    if (i <= 5) {
+                        this.ctx.shadowColor = colors.primary;
+                        this.ctx.shadowBlur = 22 * depthFactor * (1 + beatIntensity);
+                    } else {
+                        this.ctx.shadowBlur = 0;
+                    }
+
+                    this.ctx.stroke();
+                }
+
+                // Núcleo central brillante reactivo con el color secundario y primario
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, radius * 1.5, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, 20 + (bassEnergy * 70) + (beatIntensity * 45), 0, Math.PI * 2);
+                const coreGrad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, 60);
+                coreGrad.addColorStop(0, '#ffffff');
+                coreGrad.addColorStop(0.4, colors.secondary);
+                coreGrad.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = coreGrad;
+                this.ctx.globalAlpha = 0.95;
                 this.ctx.fill();
+
                 this.ctx.restore();
+            }
 
-                // --- BARRAS EXTRUIDAS EN 3D CON Z-SORTING ---
+            draw3DEqualizer(w, h, dataArray, settings, bassEnergy, beatIntensity) {
+                const cx = w / 2;
+                const cy = h / 2 + 60;
+                const radius = settings.radius || 200;
+                const tiltY = settings.tilt || 0.55;
+                const extrusion = settings.extrusion || 3.0;
+                const colors = this.getPalette();
+
+                // Rotación acelerada y reactiva al beat y bajos
+                this.rotationAngle += 0.012 + (bassEnergy * 0.03) + (beatIntensity * 0.04);
+                const barsCount = 64;
+                const step = (Math.PI * 2) / barsCount;
+
+                this.ctx.save();
+                this.ctx.translate(cx, cy);
+                this.renderParticles3D(this.ctx, tiltY, colors, bassEnergy, beatIntensity);
+
                 const renderList = [];
-
                 for (let i = 0; i < barsCount; i++) {
                     const angle = (i * step) + this.rotationAngle;
-                    
-                    // Mapear frecuencia audio
                     const dataIdx = Math.floor((i / barsCount) * (dataArray.length * 0.6));
                     const val = dataArray[dataIdx] / 255.0;
-                    
-                    const barHeight = Math.max(12, val * 180 * extrusion * (1 + beatIntensity * 0.4));
+                    const barHeight = Math.max(15, val * 190 * extrusion * (1 + beatIntensity * 0.45));
 
-                    // Coordenadas base en el plano 3D (Z es profundidad)
                     const cosA = Math.cos(angle);
                     const sinA = Math.sin(angle);
-
                     const xBase = cosA * radius;
-                    const zDepth = sinA * radius; // Utilizado para Z-ordering y sombreado
+                    const zDepth = sinA * radius;
                     const yBase = zDepth * tiltY;
-
-                    // Extrusión 3D Hacia Arriba (-Y)
                     const xTop = xBase;
                     const yTop = yBase - barHeight;
+                    const depthFactor = (zDepth + radius) / (2 * radius);
 
-                    // Escala de profundidad (caras lejanas se ven más oscuras)
-                    const depthFactor = (zDepth + radius) / (2 * radius); // 0 (lejos) a 1 (cerca)
-
-                    renderList.push({
-                        i, angle, xBase, yBase, xTop, yTop, zDepth, depthFactor, barHeight, cosA, sinA
-                    });
+                    renderList.push({ i, angle, xBase, yBase, xTop, yTop, zDepth, depthFactor, barHeight });
                 }
 
-                // Ordenar por Profundidad Z (de atrás hacia adelante)
                 renderList.sort((a, b) => a.zDepth - b.zDepth);
 
-                // Dibujar Anillo Base 3D
-                this.ctx.save();
-                this.ctx.beginPath();
-                for (let i = 0; i < renderList.length; i++) {
-                    const b = renderList[i];
-                    if (i === 0) this.ctx.moveTo(b.xBase, b.yBase);
-                    else this.ctx.lineTo(b.xBase, b.yBase);
-                }
-                this.ctx.closePath();
-                this.ctx.strokeStyle = colors.dark;
-                this.ctx.lineWidth = 6;
-                this.ctx.stroke();
-                this.ctx.restore();
-
-                // Dibujar Pilares 3D Extruidos
                 renderList.forEach(bar => {
-                    const { xBase, yBase, xTop, yTop, depthFactor, barHeight, cosA } = bar;
+                    const { xBase, yBase, xTop, yTop, depthFactor } = bar;
+                    const barWidth = Math.max(4, 10 * (0.6 + depthFactor * 0.5));
                     
-                    const barWidth = Math.max(4, 9 * (0.6 + depthFactor * 0.5));
-                    
-                    // Gradiente Volumétrico por Pilar
                     const pillarGrad = this.ctx.createLinearGradient(xBase, yBase, xTop, yTop);
-                    const alpha = 0.35 + (depthFactor * 0.65);
+                    const alpha = 0.4 + (depthFactor * 0.6);
                     pillarGrad.addColorStop(0, colors.dark);
                     pillarGrad.addColorStop(0.5, colors.secondary);
                     pillarGrad.addColorStop(1, colors.primary);
 
-                    // Caras Volumétricas
                     this.ctx.save();
                     this.ctx.globalAlpha = alpha;
-
-                    // Línea/Pilar Volumétrico Principal
                     this.ctx.beginPath();
                     this.ctx.moveTo(xBase, yBase);
                     this.ctx.lineTo(xTop, yTop);
@@ -886,25 +951,78 @@
                     this.ctx.lineCap = 'round';
                     this.ctx.stroke();
 
-                    // Tapa del Pilar (Highlight Brillante Specular 3D)
                     this.ctx.beginPath();
                     this.ctx.arc(xTop, yTop, barWidth * 0.6, 0, Math.PI * 2);
                     this.ctx.fillStyle = '#ffffff';
                     this.ctx.shadowColor = colors.primary;
-                    this.ctx.shadowBlur = 12 * depthFactor;
+                    this.ctx.shadowBlur = 14 * depthFactor;
                     this.ctx.fill();
-
                     this.ctx.restore();
                 });
 
                 this.ctx.restore();
             }
 
-            renderParticles3D(ctx, tiltY, colors, bassEnergy) {
+            drawMatrixGrid3D(w, h, dataArray, settings, bassEnergy, beatIntensity) {
+                const cx = w / 2;
+                const horizonY = h * 0.45;
+                const colors = this.getPalette();
+                const extrusion = settings.extrusion || 3.0;
+
+                this.ctx.save();
+                
+                this.ctx.strokeStyle = colors.secondary + '44';
+                this.ctx.lineWidth = 1;
+
+                for (let x = -w; x <= w * 2; x += 60) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(cx, horizonY);
+                    this.ctx.lineTo(x + ((x - cx) * 1.5), h);
+                    this.ctx.stroke();
+                }
+
+                const timeOffset = (performance.now() * 0.05) % 40;
+                for (let y = horizonY; y <= h; y += 30) {
+                    const adjustedY = y + timeOffset;
+                    if (adjustedY > h) continue;
+
+                    const depthRatio = (adjustedY - horizonY) / (h - horizonY);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, adjustedY);
+                    this.ctx.lineTo(w, adjustedY);
+                    this.ctx.strokeStyle = colors.primary;
+                    this.ctx.globalAlpha = depthRatio * (0.35 + bassEnergy * 0.65);
+                    this.ctx.lineWidth = 1 + (depthRatio * 3.5);
+                    this.ctx.stroke();
+                }
+
+                const bars = 24;
+                const barW = (w * 0.8) / bars;
+                const startX = w * 0.1;
+
+                for (let i = 0; i < bars; i++) {
+                    const dataIdx = Math.floor((i / bars) * (dataArray.length * 0.5));
+                    const val = (dataArray[dataIdx] / 255.0) * extrusion;
+                    const barH = val * 170 * (1 + beatIntensity * 0.5);
+
+                    const x = startX + (i * barW);
+                    const y = h - 60;
+
+                    const grad = this.ctx.createLinearGradient(x, y, x, y - barH);
+                    grad.addColorStop(0, colors.dark);
+                    grad.addColorStop(1, colors.primary);
+
+                    this.ctx.fillStyle = grad;
+                    this.ctx.globalAlpha = 0.9;
+                    this.ctx.fillRect(x + 2, y - barH, barW - 4, barH);
+                }
+
+                this.ctx.restore();
+            }
+
+            renderParticles3D(ctx, tiltY, colors, bassEnergy, beatIntensity = 0) {
                 this.particles3D.forEach(p => {
-                    p.z += Math.cos(p.speed) * 2;
-                    
-                    // Rotación orbital
+                    p.z += Math.cos(p.speed) * (3.5 + (bassEnergy * 6));
                     const cosR = Math.cos(p.speed);
                     const sinR = Math.sin(p.speed);
                     const rx = p.x * cosR - p.z * sinR;
@@ -917,10 +1035,10 @@
                     const scale = Math.max(0.2, (p.z + 300) / 600);
 
                     ctx.save();
-                    ctx.fillStyle = colors.primary;
-                    ctx.globalAlpha = Math.min(1, scale * (0.4 + bassEnergy * 0.6));
+                    ctx.fillStyle = colors.secondary;
+                    ctx.globalAlpha = Math.min(1, scale * (0.5 + bassEnergy * 0.7 + beatIntensity));
                     ctx.beginPath();
-                    ctx.arc(screenX, screenY, p.size * scale * (1 + bassEnergy * 0.5), 0, Math.PI * 2);
+                    ctx.arc(screenX, screenY, p.size * scale * (1 + bassEnergy * 0.8 + beatIntensity * 0.5), 0, Math.PI * 2);
                     ctx.fill();
                     ctx.restore();
                 });
@@ -947,6 +1065,7 @@
 
             let isPlaying = false;
             let currentBpm = 130;
+            let autoPilotTimer = 0;
 
             dropZone.addEventListener('click', () => photoInput.click());
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#00fbff'; });
@@ -982,33 +1101,6 @@
                 }
             });
 
-            const presetSelect = document.getElementById('presetSelect');
-            presetSelect.addEventListener('change', (e) => {
-                const preset = e.target.value;
-                if (preset === 'hardTechno') {
-                    document.getElementById('colorPalette').value = 'neonAcid';
-                    document.getElementById('effectSelect').value = 'Strobe';
-                    document.getElementById('transitionSelect').value = 'SnapCut';
-                    updateSlider('extrusion', 3.0);
-                    updateSlider('tilt', 0.60);
-                    updateSlider('radius', 190);
-                } else if (preset === 'cyberRave') {
-                    document.getElementById('colorPalette').value = 'cyberGothic';
-                    document.getElementById('effectSelect').value = 'NeonGlowPulse';
-                    document.getElementById('transitionSelect').value = 'Zoom';
-                    updateSlider('extrusion', 2.2);
-                    updateSlider('tilt', 0.45);
-                    updateSlider('radius', 170);
-                } else if (preset === 'acidLaser') {
-                    document.getElementById('colorPalette').value = 'laserGreen';
-                    document.getElementById('effectSelect').value = 'Shake';
-                    document.getElementById('transitionSelect').value = 'FlashCut';
-                    updateSlider('extrusion', 2.6);
-                    updateSlider('tilt', 0.65);
-                    updateSlider('radius', 200);
-                }
-            });
-
             function updateSlider(id, val) {
                 const slider = document.getElementById(id);
                 const label = document.getElementById(id + 'Val');
@@ -1034,7 +1126,7 @@
                     await audioEl.play();
                     isPlaying = true;
                     requestAnimationFrame(loopAnimation);
-                    statusBadge.textContent = '▶ Reproduciendo a ritmo VJ 3D...';
+                    statusBadge.textContent = '▶ Reproduciendo Túnel 3D Potenciado...';
                 } catch (err) {
                     statusBadge.textContent = '⚠️ Haz clic de nuevo para habilitar reproducción';
                 }
@@ -1060,9 +1152,24 @@
                 currentBpm = parseFloat(document.getElementById('bpmInput').value) || 130;
                 const subdiv = parseFloat(document.getElementById('beatSubdivision').value) || 2;
                 const sensitivity = parseFloat(document.getElementById('sensitivity').value) || 1.3;
+                const autoPilot = document.getElementById('autoPilot').value;
 
-                // Analizar Beat
                 const beatAnalysis = window.beatEngine.analyzeBeat(sensitivity);
+
+                // Auto-Pilot VJ Mode logic (cambia estilo de ecualizador y paleta cada 16 beats)
+                if (autoPilot === 'on' && beatAnalysis.isBeatHit) {
+                    autoPilotTimer++;
+                    if (autoPilotTimer > 16) {
+                        autoPilotTimer = 0;
+                        const styles = ['waveformTunnel', 'circularRing', 'matrixGrid'];
+                        const palettes = ['neonAcid', 'cyberGothic', 'laserGreen', 'goldVolcanic'];
+                        const currentStyleEl = document.getElementById('equalizerStyle3D');
+                        const currentPalEl = document.getElementById('colorPalette');
+                        
+                        currentStyleEl.value = styles[Math.floor(Math.random() * styles.length)];
+                        currentPalEl.value = palettes[Math.floor(Math.random() * palettes.length)];
+                    }
+                }
 
                 const currentTime = audioEl.currentTime || 0;
                 const secondsPerBeat = 60 / currentBpm;
